@@ -166,7 +166,9 @@ select.inp{appearance:auto}
 .hint{margin:0;font-size:12px;color:var(--faint)}
 
 /* preview */
-.pv-head{display:flex;align-items:center;gap:12px;justify-content:space-between}
+.pv-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;row-gap:8px}
+.pv-title,.edited-chip,.pv-progress{white-space:nowrap}
+@media (max-width:1299px){.bar-track{display:none}}
 .pv-title{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--faint)}
 .pv-progress{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
 .bar-track{width:90px;height:4px;border-radius:4px;background:var(--line);overflow:hidden}
@@ -177,11 +179,18 @@ select.inp{appearance:auto}
 .doc-head .sp{flex:1}
 .doc.recs{--t:var(--cex)}
 .doc-text{padding:18px 20px 22px;white-space:pre-wrap;overflow-wrap:anywhere;font-size:13.5px;line-height:1.72;color:var(--ink2)}
-.doc-text mark{background:none;color:var(--ink);font-weight:600;box-shadow:inset 0 -2px 0 var(--fill-line);cursor:pointer;padding:0 1px;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+.doc-text mark{background:none;color:var(--ink);font-weight:600;box-shadow:inset 0 -2px 0 var(--fill-line);cursor:text;padding:0 1px;-webkit-box-decoration-break:clone;box-decoration-break:clone}
 .doc-text mark.hole{background:var(--accent-soft);color:var(--accent-text);box-shadow:none;border-radius:5px;padding:1px 6px;font-size:.92em}
 .doc-text mark.hl{outline:2px solid var(--accent);outline-offset:1px;border-radius:4px}
 .doc-text .blank{color:var(--faint);font-style:italic}
 .pv-note{font-size:12px;color:var(--faint);margin:0;padding:0 4px}
+.pv-head .sp{flex:1}
+.pv-head .btn{height:30px;padding:0 10px}
+.edited-chip{font-size:11px;font-weight:700;color:var(--accent-text);background:var(--accent-soft);border-radius:999px;padding:2px 9px}
+.doc-text{outline:none;cursor:text;caret-color:var(--accent);transition:box-shadow .15s}
+.doc:focus-within{border-color:var(--accent-line);box-shadow:0 0 0 3px var(--accent-soft)}
+.doc-text .opt-seg.off{display:none}
+.doc-text mark[data-manual]{box-shadow:none;font-weight:inherit;color:inherit;background:none;padding:0}
 
 /* pages: editor, import, welcome */
 .page{height:100%;overflow:auto}
@@ -341,7 +350,7 @@ const ico = (n, cls='') => `<svg class="ico ${cls}" viewBox="0 0 24 24" aria-hid
 const state = {
   items:new Map(), ready:false, mode:'pending', canWrite:true,
   view:'list', currentId:null, q:'', type:'all', section:'all', sort:'recent',
-  values:{}, sig:''
+  values:{}, docs:{}, sig:''
 };
 let db = null, downloads = null;
 
@@ -414,7 +423,7 @@ function tokensHTML(src, vals, fmap){
   while((m=TOKEN.exec(src))){
     html += esc(src.slice(last,m.index));
     const l=tokenLabel(m[1]), k=norm(l), t=valueOf(fmap[k], vals);
-    html += t ? `<mark data-k="${esc(k)}" title="${esc(l)}">${esc(t)}</mark>` : `<mark class="hole" data-k="${esc(k)}">${esc(l)}</mark>`;
+    html += t ? `<mark data-k="${esc(k)}" data-label="${esc(l)}" title="${esc(l)}">${esc(t)}</mark>` : `<mark class="hole" data-k="${esc(k)}" data-label="${esc(l)}">${esc(l)}</mark>`;
     last = TOKEN.lastIndex;
   }
   return html + esc(src.slice(last));
@@ -586,7 +595,7 @@ function renderDetail(o){
           ${w?`<button class="btn sm fav" data-action="fav" aria-pressed="${!!o.fav}">${ico('star', o.fav?'filled':'')}${o.fav?'Favorita':'Favorita'}</button>
           <button class="btn sm" data-action="edit">${ico('edit')}Editar</button>
           <button class="btn sm" data-action="dup">${ico('dup')}Duplicar</button>`:''}
-          ${fields.length||opts.length||ropts.length?`<button class="btn sm ghost" data-action="clear" style="margin-left:auto">${ico('reset')}Vaciar campos</button>`:''}
+          <button class="btn sm ghost" data-action="reset" style="margin-left:auto" title="Borra lo rellenado y lo escrito a mano">${ico('reset')}Reiniciar plantilla</button>
         </div>
       </header>
       ${fields.length?`<div class="form-sec"><div class="sec-head"><h2>Campos<small>${fields.length}</small></h2></div>
@@ -598,40 +607,96 @@ function renderDetail(o){
     </section>
     <aside class="preview-pane" id="previewPane" aria-label="Texto que se copiará">
       <div class="pv-head"><span class="pv-title">Texto que se copiará</span>
-        ${fields.length?`<span class="pv-progress"><span id="fcount"></span><span class="bar-track"><i id="fprog"></i></span></span>`:''}</div>
+        <span class="edited-chip" id="editedChip" hidden>Editado a mano</span>
+        <span class="sp"></span>
+        ${fields.length?`<span class="pv-progress"><span id="fcount"></span><span class="bar-track"><i id="fprog"></i></span></span>`:''}
+        <button class="btn sm ghost" data-action="reset" title="Borra lo rellenado y lo escrito a mano">${ico('reset')}Reiniciar</button></div>
       <article class="doc t-${esc(o.type)}">
         <div class="doc-head"><span class="dot"></span><b>${hasRecs?(o.type==='quirurgica'?'Protocolo quirúrgico':'Informe'):esc(TYPES[o.type]?.label||'Texto')}</b><span class="sp"></span>${copyBody}</div>
-        <div class="doc-text" id="preview"></div>
+        <div class="doc-text" id="preview" data-part="body" role="textbox" aria-multiline="true" aria-label="Texto del informe, editable" spellcheck="true"></div>
       </article>
       ${hasRecs?`<article class="doc recs">
         <div class="doc-head"><span class="dot"></span><b>Recomendaciones al alta</b><span class="sp"></span>${copyRecs}</div>
-        <div class="doc-text" id="preview-recs"></div>
+        <div class="doc-text" id="preview-recs" data-part="recs" role="textbox" aria-multiline="true" aria-label="Recomendaciones al alta, editables" spellcheck="true"></div>
       </article>`:''}
-      <p class="pv-note">Los huecos en rosa aún están vacíos y se copiarán entre corchetes. Pulsa cualquier parte resaltada para ir a su campo. Atajos: <kbd>${KEY_COPY}</kbd> copia el informe${hasRecs?` · <kbd>${KEY_COPY_RECS}</kbd> las recomendaciones`:''}.</p>
+      <p class="pv-note">Puedes escribir y borrar directamente en este texto: se copia tal como lo ves. Lo que escribas a mano se mantiene aunque sigas rellenando campos. Los huecos en rosa están vacíos y se copian entre corchetes. Atajos: <kbd>${KEY_COPY}</kbd> copia el informe${hasRecs?` · <kbd>${KEY_COPY_RECS}</kbd> las recomendaciones`:''}.</p>
     </aside>
   </div>`;
+  mountDocs(o, fields);
   $('#copybar').innerHTML = hasRecs
     ? `<button class="btn primary" data-action="copy" data-part="body">${ico('copy')}Copiar informe</button><button class="btn outline" data-action="copy" data-part="recs">${ico('copy')}Copiar recomendaciones</button>`
     : `<button class="btn primary" data-action="copy" data-part="body">${ico('copy')}Copiar texto</button>`;
   updatePreview();
 }
-function previewHTML(body, vals, fields, prefix='opt:'){
-  const fmap=Object.fromEntries(fields.map(f=>[f.key,f]));
-  let i=0;
-  let s=(body||'').replace(OPT,(a,inner)=>vals[prefix+(i++)] ? inner : '\u0000');
-  s=s.split('\n').filter(line=>!/^[\s\u0000]*\u0000[\s\u0000]*$/.test(line)).join('\n').replace(/[ \t]*\u0000/g,'');
-  s=s.replace(/\n{3,}/g,'\n\n').replace(/^\n+|\s+$/g,'');
-  return s ? tokensHTML(s, vals, fmap) : '<span class="blank">Sin texto</span>';
+/* The preview is a live, editable document. It is built once per template and then
+   refreshed in place: marks update when fields change, optional steps show or hide,
+   and anything typed by hand stays put until the template is reset. */
+function docHTML(src, vals, fmap, prefix){
+  src=String(src||'').replace(/\s+$/,'');
+  let html='', last=0, m, i=0; OPT.lastIndex=0;
+  while((m=OPT.exec(src))){
+    let start=m.index, end=m.index+m[0].length, pre='', post='';
+    const lineStart = start===0 || src[start-1]==='\n';
+    const lineEnd = end===src.length || src[end]==='\n';
+    if(lineStart && lineEnd && end<src.length){ post='\n'; end+=1; }
+    else if(!lineStart && src[start-1]===' '){ start-=1; pre=' '; }
+    html += tokensHTML(src.slice(last,start), vals, fmap);
+    const k=prefix+(i++);
+    html += `<span class="opt-seg${vals[k]?'':' off'}" data-opt="${k}">${esc(pre)}${tokensHTML(m[1], vals, fmap)}${esc(post)}</span>`;
+    last=end; OPT.lastIndex=m.index+m[0].length;
+  }
+  return html + tokensHTML(src.slice(last), vals, fmap);
+}
+let PLAINTEXT_OK=null;
+function makeEditable(el){
+  if(PLAINTEXT_OK===null){ const t=document.createElement('div'); try{ t.contentEditable='plaintext-only'; }catch{} PLAINTEXT_OK = t.contentEditable==='plaintext-only'; }
+  el.contentEditable = PLAINTEXT_OK ? 'plaintext-only' : 'true';
+}
+const contentSig = o => (o.body||'')+'\u0001'+(o.recs||'');
+function mountDocs(o, fields){
+  const fmap=Object.fromEntries(fields.map(f=>[f.key,f])); const vals=state.values[o.id]||{};
+  const saved = state.docs[o.id] && state.docs[o.id].sig===contentSig(o) ? state.docs[o.id] : null;
+  const p=$('#preview'); if(p){ p.innerHTML = saved ? saved.body : docHTML(o.body, vals, fmap, 'opt:'); makeEditable(p); }
+  const r=$('#preview-recs'); if(r){ r.innerHTML = saved && saved.recs!=null ? saved.recs : docHTML(o.recs, vals, fmap, 'ropt:'); makeEditable(r); }
+  $('#editedChip') && ($('#editedChip').hidden=!saved);
+  updatePreview();
 }
 function updatePreview(){
   const o=state.items.get(state.currentId); if(!o) return;
   const fields=parseFields(allText(o)); const vals=state.values[o.id]||{};
-  const p=$('#preview'); if(p) p.innerHTML=previewHTML(o.body, vals, fields);
-  const pr2=$('#preview-recs'); if(pr2) pr2.innerHTML=previewHTML(o.recs, vals, fields, 'ropt:');
+  const fmap=Object.fromEntries(fields.map(f=>[f.key,f]));
+  document.querySelectorAll('.doc-text mark[data-k]').forEach(mk=>{
+    if(mk.dataset.manual) return;
+    const t=valueOf(fmap[mk.dataset.k], vals);
+    if(t){ if(mk.textContent!==t) mk.textContent=t; mk.classList.remove('hole'); }
+    else { const l=mk.dataset.label||''; if(mk.textContent!==l) mk.textContent=l; mk.classList.add('hole'); }
+  });
+  document.querySelectorAll('.doc-text .opt-seg[data-opt]').forEach(sg=>sg.classList.toggle('off', !vals[sg.dataset.opt]));
   const done=fields.filter(f=>valueOf(f,vals)).length;
   const c=$('#fcount'); if(c) c.textContent=`${done} de ${fields.length} campos`;
   const pr=$('#fprog'); if(pr) pr.style.width=(fields.length?done/fields.length*100:0)+'%';
+  if(state.docs[o.id]) saveDocs(o);
   if(state.hlKey) highlight(state.hlKey, false);
+}
+function saveDocs(o){
+  const p=$('#preview'), r=$('#preview-recs');
+  state.docs[o.id]={sig:contentSig(o), body:p?p.innerHTML:'', recs:r?r.innerHTML:null};
+  const chip=$('#editedChip'); if(chip) chip.hidden=false;
+}
+function serializeDoc(el){
+  if(!el) return '';
+  let out='';
+  (function walk(n){
+    if(n.nodeType===3){ out+=n.nodeValue; return; }
+    if(n.nodeType!==1) return;
+    if(n.classList.contains('off')) return;
+    if(n.tagName==='BR'){ out+='\n'; return; }
+    if(n.tagName==='MARK' && n.classList.contains('hole') && !n.dataset.manual){ out+='['+(n.dataset.label||n.textContent)+']'; return; }
+    const block = n!==el && /^(DIV|P)$/.test(n.tagName);
+    if(block && out && !out.endsWith('\n')) out+='\n';
+    n.childNodes.forEach(walk);
+  })(el);
+  return out.replace(/ /g,' ').replace(/[ \t]+\n/g,'\n').replace(/\n{3,}/g,'\n\n').replace(/^\n+|\s+$/g,'');
 }
 function highlight(k, scroll=true){
   document.querySelectorAll('.doc-text mark.hl').forEach(m=>m.classList.remove('hl'));
@@ -645,8 +710,9 @@ function highlight(k, scroll=true){
 async function copyPart(part){
   const o=state.items.get(state.currentId); if(!o) return;
   if(part==='recs' && !(o.recs&&o.recs.trim())) return;
-  const fields=parseFields(allText(o)); const vals=state.values[o.id]||{};
-  const txt= part==='recs' ? fillText(o.recs,vals,fields,'ropt:') : fillText(o.body,vals,fields);
+  const el = part==='recs' ? $('#preview-recs') : $('#preview');
+  let txt = serializeDoc(el);
+  if(!el){ const fields=parseFields(allText(o)); const vals=state.values[o.id]||{}; txt = part==='recs' ? fillText(o.recs,vals,fields,'ropt:') : fillText(o.body,vals,fields); }
   const ok=await copyText(txt, part==='recs'?'Recomendaciones copiadas':(o.recs?'Informe copiado':'Texto copiado'));
   if(ok && state.canWrite){ patchItem(o.id,{uses:(o.uses||0)+1,lastUsed:nowISO()}).then(()=>renderList()).catch(()=>{}); }
 }
@@ -834,7 +900,8 @@ document.addEventListener('click', async ev=>{
   const mk=ev.target.closest('.doc-text mark');
   if(mk && !b){
     const f=document.querySelector(`.f[data-k="${CSS.escape(mk.dataset.k)}"]`);
-    if(f){ f.scrollIntoView({block:'center',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'}); const i=f.querySelector('input:not([hidden]),button'); i&&i.focus({preventScroll:true}); highlight(mk.dataset.k,false); }
+    if(f && isDesktop()) f.scrollIntoView({block:'nearest',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+    highlight(mk.dataset.k,false);
     return;
   }
   if(!b) return;
@@ -870,7 +937,7 @@ document.addEventListener('click', async ev=>{
       if(gi){ const show=Array.isArray(vals[k])?vals[k].some(hasGap):hasGap(vals[k]); const was=gi.hidden; gi.hidden=!show; if(show && was) gi.focus(); }
       state.hlKey=k; updatePreview(); highlight(k); break; }
     case 'optstep': toggleOpt(b.dataset.k); break;
-    case 'clear': { const o=state.items.get(state.currentId); if(!o) break; state.values[o.id]={}; renderDetail(o); toast('Campos vaciados'); break; }
+    case 'reset': case 'clear': { const o=state.items.get(state.currentId); if(!o) break; state.values[o.id]={}; delete state.docs[o.id]; state.hlKey=null; renderDetail(o); $('#formPane') && ($('#formPane').scrollTop=0); $('#previewPane') && ($('#previewPane').scrollTop=0); toast('Plantilla reiniciada'); break; }
     case 'copy': copyPart(b.dataset.part||'body'); break;
     case 'ins': insertAtCursor(b.dataset.v,b.dataset.sel); break;
     case 'del': {
@@ -900,6 +967,14 @@ document.addEventListener('click', async ev=>{
 });
 document.addEventListener('input', ev=>{
   const t=ev.target;
+  if(t.classList && t.classList.contains('doc-text')){
+    const o=state.items.get(state.currentId); if(!o) return;
+    const sel=window.getSelection(); const n=sel && sel.anchorNode;
+    const mk=n && (n.nodeType===1?n:n.parentElement)?.closest('mark');
+    if(mk && t.contains(mk)){ mk.dataset.manual='1'; mk.classList.remove('hole'); }
+    t.querySelectorAll('mark:not([data-manual])').forEach(m=>{ if(m.textContent==='' ) m.dataset.manual='1'; });
+    saveDocs(o); return;
+  }
   if(t.id==='q'){ state.q=t.value; renderList(); return; }
   if(t.dataset && t.dataset.field){ const o=state.items.get(state.currentId); if(!o) return; (state.values[o.id]||={})[t.dataset.field]=t.value; updatePreview(); return; }
   if(t.dataset && t.dataset.gap){ const o=state.items.get(state.currentId); if(!o) return; (state.values[o.id]||={})[t.dataset.gap+'::x']=t.value; updatePreview(); return; }
@@ -918,6 +993,12 @@ document.addEventListener('focusin', ev=>{
   if(t.matches && t.matches('textarea[data-ed]')) lastEd=t.id;
   const f=t.closest && t.closest('#formPane .f[data-k]');
   if(f) highlight(f.dataset.k);
+});
+document.addEventListener('paste', ev=>{
+  const t=ev.target.closest && ev.target.closest('.doc-text');
+  if(!t || PLAINTEXT_OK) return;
+  ev.preventDefault(); const text=(ev.clipboardData||window.clipboardData).getData('text/plain');
+  document.execCommand('insertText', false, text);
 });
 document.addEventListener('submit', ev=>{ if(ev.target.id==='edForm') submitEditor(ev); });
 function toggleOpt(k){

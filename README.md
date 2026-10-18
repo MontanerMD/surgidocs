@@ -11,6 +11,7 @@ En escritorio trabaja en tres columnas: las plantillas a la izquierda, los campo
 - **49 plantillas** de SurgiDocs: 12 de urgencias, 30 protocolos quirúrgicos, 5 campos comunes (antecedentes, exploración normal, pruebas normales, evolución y circunstancias al alta) y 2 de consulta.
 - **Organización:** búsqueda y filtros por tipo y por sección del servicio (CCP, CEG, CHP, CEM, General), además de favoritas.
 - **Rellenado guiado:** los huecos se convierten en campos, las alternativas en botones y los pasos opcionales en casillas. La vista previa se actualiza al momento.
+- **Texto editable:** el texto que se copiará se puede escribir y borrar directamente con el teclado. Lo escrito a mano se mantiene aunque sigas rellenando campos, y **Reiniciar plantilla** la devuelve a su estado original.
 - **Dos cuadros separados:** el informe (técnica quirúrgica o valoración) y las **recomendaciones al alta**, cada uno con su botón de copiar.
 - **Atajos de teclado:** `/` busca, `Ctrl/⌘ + Intro` copia el informe y `Ctrl/⌘ + Mayús + Intro` copia las recomendaciones.
 - **Edición:** editor para crear, duplicar y modificar plantillas.
