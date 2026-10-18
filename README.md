@@ -1,6 +1,8 @@
 # Plantillario CGAD
 
-App web *mobile first* para gestionar, rellenar y copiar plantillas clínicas de **Cirugía General y del Aparato Digestivo**: informes de urgencias, protocolos quirúrgicos, consulta y bloques reutilizables.
+Web-app para la consulta (pensada para escritorio y adaptada a móvil) que permite gestionar, rellenar y copiar plantillas clínicas de **Cirugía General y del Aparato Digestivo**: informes de urgencias, protocolos quirúrgicos, consulta y bloques reutilizables.
+
+En escritorio trabaja en tres columnas: las plantillas a la izquierda, los campos en el centro y, a la derecha, el texto exacto que se copiará, actualizado mientras rellenas.
 
 **Abrir la app:** https://montanermd.github.io/surgidocs/
 
@@ -10,6 +12,7 @@ App web *mobile first* para gestionar, rellenar y copiar plantillas clínicas de
 - **Organización:** búsqueda y filtros por tipo y por sección del servicio (CCP, CEG, CHP, CEM, General), además de favoritas.
 - **Rellenado guiado:** los huecos se convierten en campos, las alternativas en botones y los pasos opcionales en casillas. La vista previa se actualiza al momento.
 - **Dos cuadros separados:** el informe (técnica quirúrgica o valoración) y las **recomendaciones al alta**, cada uno con su botón de copiar.
+- **Atajos de teclado:** `/` busca, `Ctrl/⌘ + Intro` copia el informe y `Ctrl/⌘ + Mayús + Intro` copia las recomendaciones.
 - **Edición:** editor para crear, duplicar y modificar plantillas.
 - **Importar y exportar:** importación desde texto o JSON y exportación de una copia de seguridad.
 
