@@ -1,6 +1,6 @@
 {
  "app": "Plantillario CGAD",
- "version": 6,
+ "version": 7,
  "plantillas": [
   {
    "id": "sd-absceso-cutaneo-o-quiste-epidermoide-abscesificado",
@@ -440,6 +440,24 @@
    "uses": 0,
    "createdAt": "2026-10-18T16:27:32.909Z",
    "updatedAt": "2026-10-18T17:53:23.000Z"
+  },
+  {
+   "id": "sd-hemicolectomia-derecha-abierta",
+   "title": "Hemicolectomía derecha abierta",
+   "type": "quirurgica",
+   "section": "CCP",
+   "tags": [
+    "SurgiDocs",
+    "colon",
+    "oncológica",
+    "laparotomía"
+   ],
+   "body": "ANESTESIA: General\n\nPROFILAXIS ANTIBIÓTICA: {{Profilaxis antibiótica: Cefuroxima 1,5 g + Metronidazol 15 mg/kg | Cefuroxima 1,5 g + Metronidazol 15 mg/kg + Gentamicina 5 mg/kg | Cefuroxima 1,5 g + Gentamicina 5 mg/kg}}\n\nPOSICIÓN: Decúbito supino. Brazos en abducción. Piernas {{Piernas: juntas | separadas con perneras}}.\n\nACCESO: Laparotomía media suprainfraumbilical.\n\nHALLAZGOS: Tumoración y tatuaje en {{Localización: ciego | colon ascendente | ángulo hepático | colon transverso}}. Sin metástasis hepáticas ni carcinomatosis peritoneal.\n\nTÉCNICA:\n- Apertura del peritoneo parietocólico y fascia de Toldt derechas, movilizando ciego y colon ascendente.\n- Disección de lateral a medial sobre el retroperitoneo hasta alcanzar la fascia de Fredet, identificando y respetando uréter y vasos gonadales derechos, y duodeno.\n- Sección del ligamento frenocólico y apertura de la transcavidad de los epiplones para movilizar el ángulo hepático del colon.\n- Identificación y sellado-sección (Ligasure Maryland) en su origen de los vasos ileocólicos, cólicos derechos[[ y {{Cólicos medios: ramas derechas de los cólicos medios | cólicos medios}}]].\n- Sellado-sección del mesocolon y epiplón mayor hasta el área de futura sección del colon transverso, sobrepasando con margen de seguridad la tumoración y el tatuaje.\n- Sellado-sección del mesenterio hasta el área de futura sección del íleon terminal (a 10cm de la válvula ileocecal).\n- Evaluación de la adecuada movilización y vascularización (ICG) de las zonas anastomosables.\n\nANASTOMOSIS:\n- Confección de anastomosis aniso-peristáltica latero-lateral mecánica con grapadora lineal (ECHELON LINEAR, 80mm, 2 cargas azules). Descarga de tensión en final de línea de grapas con 1 punto de Novosyn 2/0.\n\nREVISIÓN: Hemostasia satisfactoria. Recuento correcto de material quirúrgico, confirmado por enfermería.\n\nDRENAJES: {{Drenajes: No | Penrose en gotiera parietocólica derecha, exteriorizado por fosa ilíaca derecha y fijado a piel con seda 1}}.\n\nCIERRE:\n- Aponeurosis: 2 suturas continuas de Monomax 1.\n- Piel: grapas y apósitos compresivos.\n\nPÉRDIDA HEMÁTICA ESTIMADA: {{Pérdida hemática (cc)}} cc.",
+   "recs": "CUIDADOS DE LAS HERIDAS:\n- Mantenga las heridas limpias y secas. Puede ducharse diariamente y lavarlas con agua y jabón (sin frotar), pero el baño está desaconsejado hasta su cicatrización completa.\n- Aplique clorhexidina (Cristalmina) diariamente sobre las mismas. Puede dejarlas descubiertas o taparlas con apósitos si manchan la ropa o molestan al roce.\n- Solicite cita con enfermería de su Centro de Salud en 10 días para valorar la retirada de las grapas.\n\nMEDICACIÓN:\n- Puede continuar con su medicación domiciliaria habitual.\n- Enoxaparina 40mg 1 pinchazo cada día durante 30 días.\n- Si tiene dolor, tome paracetamol 650mg 1 comprimido cada 8h (desayuno, comida y cena). Si es insuficiente, altérnelo con metamizol 575mg (Nolotil) 1 comprimido cada 8h (almuerzo y merienda).\n\nCUIDADOS PERSONALES:\n- Evite esfuerzos físicos intensos que comprometan la región abdominal (coger peso o subir escaleras, por ejemplo) durante el 1º mes postoperatorio.\n- Realice una dieta blanda durante las primeras 2 semanas, recuperando progresivamente la normalidad.\n\n- Con Cirugía General en 1 mes aproximadamente para control evolutivo.\n- Con Oncología para valoración. Recibirá los detalles de la citación vía telefónica o por correo postal.\n\nSI APARECEN COMPLICACIONES, ACUDA A URGENCIAS.",
+   "fav": false,
+   "uses": 0,
+   "createdAt": "2026-10-18T18:04:34.000Z",
+   "updatedAt": "2026-10-18T18:04:34.000Z"
   },
   {
    "id": "sd-hemicolectomia-derecha-laparoscopica",

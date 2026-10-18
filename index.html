@@ -1044,12 +1044,13 @@ async function startLocal(){
       /* refresh the starter templates the viewer has not edited since they were loaded */
       let n=0;
       seed.items.forEach(sd=>{
-        const l=state.items.get(sd.id); if(!l) return;
+        const l=state.items.get(sd.id);
+        if(!l){ const isNew = meta.stamps ? !(sd.id in meta.stamps) : true; if(isNew){ state.items.set(sd.id,{...sd}); n++; } return; }
         const known=meta.stamps ? meta.stamps[sd.id] : null;
         const untouched = known ? l.updatedAt===known : String(l.updatedAt||'') <= '2026-10-18T17:00:00Z';
         if(untouched && l.updatedAt!==sd.updatedAt){ state.items.set(sd.id,{...sd, fav:!!l.fav, uses:l.uses||0}); n++; }
       });
-      if(n){ persistLocal(); setTimeout(()=>toast(`${n} plantilla${n===1?'':'s'} actualizada${n===1?'':'s'}`),600); }
+      if(n){ persistLocal(); setTimeout(()=>toast(`${n} plantilla${n===1?'':'s'} nueva${n===1?'':'s'} o actualizada${n===1?'':'s'}`),600); }
     }
     try{ localStorage.setItem(SEED_KEY, JSON.stringify({version:seed.version, stamps:Object.fromEntries(seed.items.map(x=>[x.id,x.updatedAt]))})); }catch{}
   }
