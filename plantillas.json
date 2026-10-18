@@ -1,6 +1,6 @@
 {
  "app": "Plantillario CGAD",
- "version": 4,
+ "version": 5,
  "plantillas": [
   {
    "id": "sd-absceso-cutaneo-o-quiste-epidermoide-abscesificado",
@@ -277,12 +277,12 @@
     "ostomía",
     "intestino delgado"
    ],
-   "body": "- Posición en decúbito supino.\n- Incisión periestomal.\n- Disección del tejido celular subcutáneo y del saco peritoneal hasta alcanzar la aponeurosis.\n- Desinserción de la ileostomía accediendo a cavidad abdominal y liberación de sus adherencias a peritoneo parietal para exteriorizarla.\n- Disección y sección entre ligaduras (Novosyn 2/0) del mesenterio adyacente.\n- Confección de anastomosis aniso-peristáltica latero-lateral mecánica con grapadora lineal (NTLC, 75mm, dorada, x2). Liberación de tensión en línea de grapas con 1 punto de Novosyn 3/0.\n- Revisión de la hemostasia y reintroducción del asa en cavidad abdominal.\n- Cierre de la aponeurosis con sutura continua de Monomax 1.\n- Cierre del tejido celular subcutáneo en jareta con suturas continuas de Novosyn 3/0 y Vicryl Rapid 2/0.\n- Mechado con gasa. Apósito.",
+   "body": "ANESTESIA: General + Local ({{Anestésico local: levobupivacaína 0.25% | ropivacaína 0.3%}})\n\nPROFILAXIS ANTIBIÓTICA: {{Profilaxis antibiótica: Cefuroxima 1,5 g + Metronidazol 15 mg/kg | Cefuroxima 1,5 g + Metronidazol 15 mg/kg + Gentamicina 5 mg/kg | Cefuroxima 1,5 g + Gentamicina 5 mg/kg}}\n\nPOSICIÓN: Decúbito supino. Piernas juntas. Brazos en abducción.\n\nACCESO: Incisión periestomal.\n\nTÉCNICA:\n- Disección del tejido celular subcutáneo y del saco peritoneal hasta alcanzar la aponeurosis.\n- Desinserción del asa intestinal ostomizada y liberación de sus adherencias a peritoneo parietal para su exteriorización.\n- Disección y sección entre ligaduras (Novosyn 2/0) del mesenterio adyacente.\n- Confección de anastomosis aniso-peristáltica latero-lateral mecánica con grapadora lineal (ECHELON LINEAR, 80mm, 2 cargas azules). Descarga de tensión en final de línea de grapas con 1 punto de Novosyn 2/0.\n- Reintroducción del asa anastomosada en cavidad abdominal.\n\nREVISIÓN: Hemostasia satisfactoria. Recuento correcto de material quirúrgico, confirmado por enfermería.\n\nCIERRE:\n- Aponeurosis: transversalmente con sutura continua de Monomax 1.\n- Tejido celular subcutáneo: en jareta con suturas continuas de Novosyn 3/0 y Vicryl Rapid 2/0.\n- Mechado con gasa bañada en clorhexidina y apósito no compresivo.",
    "recs": "CUIDADOS DE LA HERIDA:\n- Mantenga la herida limpia y seca. Puede ducharse diariamente y lavarla con agua y jabón (sin frotar), pero el baño está desaconsejado hasta su cicatrización completa.\n- Aplique clorhexidina (Cristalmina) diariamente sobre la misma y cúbrala con una gasa y un apósito durante las primeras 2 semanas. Posteriormente, puede dejarla descubierta o taparla con un apósito si mancha la ropa o molesta al roce.\n\nMEDICACIÓN:\n- Puede continuar con su medicación domiciliaria habitual.\n- Si tiene dolor, tome paracetamol 650mg 1 comprimido cada 8h (desayuno, comida y cena). Si resulta insuficiente, altérnelo con metamizol 575mg (Nolotil) 1 comprimido cada 8h (almuerzo y merienda).\n\nCUIDADOS PERSONALES:\n- Evite esfuerzos físicos intensos que comprometan la región abdominal (coger peso o subir escaleras, por ejemplo) durante el 1º mes postoperatorio.\n- Realice una dieta blanda durante las primeras 2 semanas, recuperando progresivamente la normalidad.\n\n- Con Cirugía General en 1 mes aproximadamente para control evolutivo.\n\nSI APARECEN COMPLICACIONES, ACUDA A URGENCIAS.",
    "fav": false,
    "uses": 0,
    "createdAt": "2026-10-18T16:27:41.909Z",
-   "updatedAt": "2026-10-18T17:53:23.000Z"
+   "updatedAt": "2026-10-18T18:03:19.000Z"
   },
   {
    "id": "sd-colecistectomia-laparoscopica-urgente-programada",
