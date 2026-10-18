@@ -948,14 +948,32 @@ function onData(){
     if(detailSig(o)!==state.sig) renderDetail(o);
   } else if(state.view==='list'){ renderMain(); }
 }
-async function fetchSeed(){
-  try{ const r=await fetch('plantillas.json',{cache:'no-store'}); if(!r.ok) return [];
-    const d=await r.json(); const arr=Array.isArray(d)?d:(d.plantillas||[]);
-    return arr.filter(x=>x && x.id && x.title); }catch{ return []; }
+const SEED_KEY='plantillario.seed';
+async function fetchSeedData(){
+  try{ const r=await fetch('plantillas.json',{cache:'no-store'}); if(!r.ok) return null;
+    const d=await r.json(); const arr=(Array.isArray(d)?d:(d.plantillas||[])).filter(x=>x && x.id && x.title);
+    return {version:Number(d.version)||1, items:arr}; }catch{ return null; }
 }
+async function fetchSeed(){ const d=await fetchSeedData(); return d?d.items:[]; }
 async function startLocal(){
   state.mode='local'; loadLocal();
-  if(!state.items.size){ const seed=await fetchSeed(); if(seed.length){ seed.forEach(o=>state.items.set(o.id,{...o})); persistLocal(); } }
+  const seed=await fetchSeedData();
+  if(seed && seed.items.length){
+    let meta={}; try{ meta=JSON.parse(localStorage.getItem(SEED_KEY)||'{}')||{}; }catch{}
+    if(!state.items.size){ seed.items.forEach(o=>state.items.set(o.id,{...o})); persistLocal(); }
+    else if((meta.version||1) < seed.version){
+      /* refresh the starter templates the viewer has not edited since they were loaded */
+      let n=0;
+      seed.items.forEach(sd=>{
+        const l=state.items.get(sd.id); if(!l) return;
+        const known=meta.stamps ? meta.stamps[sd.id] : null;
+        const untouched = known ? l.updatedAt===known : String(l.updatedAt||'') <= '2026-10-18T17:00:00Z';
+        if(untouched && l.updatedAt!==sd.updatedAt){ state.items.set(sd.id,{...sd, fav:!!l.fav, uses:l.uses||0}); n++; }
+      });
+      if(n){ persistLocal(); setTimeout(()=>toast(`${n} plantilla${n===1?'':'s'} actualizada${n===1?'':'s'}`),600); }
+    }
+    try{ localStorage.setItem(SEED_KEY, JSON.stringify({version:seed.version, stamps:Object.fromEntries(seed.items.map(x=>[x.id,x.updatedAt]))})); }catch{}
+  }
   onData();
 }
 async function boot(){
