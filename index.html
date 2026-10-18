@@ -166,8 +166,8 @@ select.inp{appearance:auto}
 .hint{margin:0;font-size:12px;color:var(--faint)}
 
 /* preview */
-.pv-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;row-gap:8px}
-.pv-title,.edited-chip,.pv-progress{white-space:nowrap}
+.pv-head{display:flex;align-items:center;gap:10px;height:30px;flex-wrap:nowrap;overflow:hidden}
+.pv-title,.pv-progress{white-space:nowrap}
 @media (max-width:1299px){.bar-track{display:none}}
 .pv-title{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--faint)}
 .pv-progress{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
@@ -185,8 +185,8 @@ select.inp{appearance:auto}
 .doc-text .blank{color:var(--faint);font-style:italic}
 .pv-note{font-size:12px;color:var(--faint);margin:0;padding:0 4px}
 .pv-head .sp{flex:1}
-.pv-head .btn{height:30px;padding:0 10px}
-.edited-chip{font-size:11px;font-weight:700;color:var(--accent-text);background:var(--accent-soft);border-radius:999px;padding:2px 9px}
+.doc-actions .reset{margin-left:auto}
+.doc-actions .reset.dirty{border-color:var(--accent);color:var(--accent-text);background:var(--accent-soft)}
 .doc-text{outline:none;cursor:text;caret-color:var(--accent);transition:box-shadow .15s}
 .doc:focus-within{border-color:var(--accent-line);box-shadow:0 0 0 3px var(--accent-soft)}
 .doc-text .opt-seg.off{display:none}
@@ -595,7 +595,7 @@ function renderDetail(o){
           ${w?`<button class="btn sm fav" data-action="fav" aria-pressed="${!!o.fav}">${ico('star', o.fav?'filled':'')}${o.fav?'Favorita':'Favorita'}</button>
           <button class="btn sm" data-action="edit">${ico('edit')}Editar</button>
           <button class="btn sm" data-action="dup">${ico('dup')}Duplicar</button>`:''}
-          <button class="btn sm ghost" data-action="reset" style="margin-left:auto" title="Borra lo rellenado y lo escrito a mano">${ico('reset')}Reiniciar plantilla</button>
+          <button class="btn sm reset" id="btnReset" data-action="reset" title="Borra lo rellenado y lo escrito a mano y deja la plantilla como recién abierta">${ico('reset')}Reiniciar plantilla</button>
         </div>
       </header>
       ${fields.length?`<div class="form-sec"><div class="sec-head"><h2>Campos<small>${fields.length}</small></h2></div>
@@ -607,10 +607,8 @@ function renderDetail(o){
     </section>
     <aside class="preview-pane" id="previewPane" aria-label="Texto que se copiará">
       <div class="pv-head"><span class="pv-title">Texto que se copiará</span>
-        <span class="edited-chip" id="editedChip" hidden>Editado a mano</span>
         <span class="sp"></span>
-        ${fields.length?`<span class="pv-progress"><span id="fcount"></span><span class="bar-track"><i id="fprog"></i></span></span>`:''}
-        <button class="btn sm ghost" data-action="reset" title="Borra lo rellenado y lo escrito a mano">${ico('reset')}Reiniciar</button></div>
+        ${fields.length?`<span class="pv-progress"><span id="fcount"></span><span class="bar-track"><i id="fprog"></i></span></span>`:''}</div>
       <article class="doc t-${esc(o.type)}">
         <div class="doc-head"><span class="dot"></span><b>${hasRecs?(o.type==='quirurgica'?'Protocolo quirúrgico':'Informe'):esc(TYPES[o.type]?.label||'Texto')}</b><span class="sp"></span>${copyBody}</div>
         <div class="doc-text" id="preview" data-part="body" role="textbox" aria-multiline="true" aria-label="Texto del informe, editable" spellcheck="true"></div>
@@ -658,7 +656,7 @@ function mountDocs(o, fields){
   const saved = state.docs[o.id] && state.docs[o.id].sig===contentSig(o) ? state.docs[o.id] : null;
   const p=$('#preview'); if(p){ p.innerHTML = saved ? saved.body : docHTML(o.body, vals, fmap, 'opt:'); makeEditable(p); }
   const r=$('#preview-recs'); if(r){ r.innerHTML = saved && saved.recs!=null ? saved.recs : docHTML(o.recs, vals, fmap, 'ropt:'); makeEditable(r); }
-  $('#editedChip') && ($('#editedChip').hidden=!saved);
+  $('#btnReset') && $('#btnReset').classList.toggle('dirty', !!saved);
   updatePreview();
 }
 function updatePreview(){
@@ -681,7 +679,7 @@ function updatePreview(){
 function saveDocs(o){
   const p=$('#preview'), r=$('#preview-recs');
   state.docs[o.id]={sig:contentSig(o), body:p?p.innerHTML:'', recs:r?r.innerHTML:null};
-  const chip=$('#editedChip'); if(chip) chip.hidden=false;
+  const rb=$('#btnReset'); if(rb) rb.classList.add('dirty');
 }
 function serializeDoc(el){
   if(!el) return '';
