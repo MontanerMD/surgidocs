@@ -1257,7 +1257,7 @@ Paciente en {{Posición: Lloyd-Davies | decúbito supino}}...</pre>
         <button class="btn" data-action="export-copy">${ico('copy')}Copiar JSON</button>
       </div>
     </section>
-    ${state.mode==='cloud'&&w?`<section class="card"><h2>Edición en este ordenador</h2><p>La edición está activada en este navegador. Si es un ordenador compartido, desactívala al terminar.</p><div><button class="btn" data-action="lock">Desactivar la edición</button></div></section>`:''}
+    ${state.mode==='cloud'?(w?`<section class="card"><h2>Edición en este ordenador</h2><p>La edición está activada en este navegador. Si es un ordenador compartido, desactívala al terminar.</p><div><button class="btn" data-action="lock">Desactivar la edición</button></div></section>`:`<section class="card"><h2>Edición en este ordenador</h2><p>Las plantillas se pueden consultar y copiar sin contraseña. Para crear, editar o borrar, activa la edición con tu contraseña.</p><div><button class="btn primary" data-action="unlock">Activar edición</button></div></section>`):''}
     ${state.mode==='local'&&w?`<section class="card"><h2>Plantillas iniciales</h2><p>Vuelve a añadir las plantillas que trae la app y que hayas borrado. Las que ya tienes no se tocan.</p><div><button class="btn" data-action="restore-seed">${ico('reset')}Restaurar plantillas iniciales</button></div></section>`:''}
     <p class="notice">Las plantillas no deben contener datos de pacientes. Usa campos {{ }} para todo lo que identifique a una persona.</p>`);
 }
