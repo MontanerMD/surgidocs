@@ -189,8 +189,40 @@ select.inp{appearance:auto}
 .doc-actions .reset.dirty{border-color:var(--accent);color:var(--accent-text);background:var(--accent-soft)}
 .doc-text{outline:none;cursor:text;caret-color:var(--accent);transition:box-shadow .15s}
 .doc:focus-within{border-color:var(--accent-line);box-shadow:0 0 0 3px var(--accent-soft)}
-.doc-text .opt-seg.off{display:none}
+
 .doc-text mark[data-manual]{box-shadow:none;font-weight:inherit;color:inherit;background:none;padding:0}
+
+
+/* inline document page */
+.doc-page{max-width:900px;gap:16px}
+.doc-page .form-head{margin-bottom:0;padding-bottom:16px}
+.guide{display:flex;flex-wrap:wrap;align-items:center;gap:6px 16px;font-size:12px;color:var(--muted);padding:2px}
+.guide mark.demo{cursor:default;font-size:11.5px}
+.guide .opt-tog.demo{cursor:default}
+.guide .pending{margin-left:auto;font-weight:700;color:var(--accent-text);white-space:nowrap}
+.guide .pending.done{color:var(--qx)}
+.doc-text{font-size:14.5px;line-height:1.75;padding:22px 26px 26px}
+.doc-text strong.hd{font-weight:700;color:var(--ink)}
+mark.fld{background:none;color:var(--ink);font-weight:600;box-shadow:inset 0 -2px 0 var(--fill-line);padding:0 1px;border-radius:2px;cursor:text;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+mark.fld.hole{background:var(--accent-soft);color:var(--accent-text);box-shadow:inset 0 0 0 1px var(--accent-line);border-radius:6px;padding:1px 7px;font-size:.9em;cursor:pointer}
+.doc-text mark.fld.hole:hover{box-shadow:inset 0 0 0 1.5px var(--accent)}
+.doc-text mark.fld[data-t="choice"],.doc-text mark.fld[data-t="multi"]{cursor:pointer}
+.doc-text mark.fld[data-t="choice"]::after,.doc-text mark.fld[data-t="multi"]::after,.guide mark.choice::after{content:"▾";font-size:.8em;margin-left:3px;opacity:.7;font-weight:700}
+.doc-text .opt-seg.off{text-decoration:line-through;text-decoration-color:var(--faint);color:var(--faint)}
+.doc-text .opt-seg.off mark.fld{opacity:.55;pointer-events:none}
+.opt-tog{display:inline-grid;place-items:center;width:18px;height:18px;margin-right:6px;border-radius:6px;border:1.5px solid var(--accent);color:var(--accent-text);background:var(--surface);font-size:13px;font-weight:800;line-height:1;vertical-align:-3px;cursor:pointer;user-select:none;-webkit-user-select:none}
+.opt-tog::before{content:"+"}
+.doc-text .opt-seg:not(.off) > .opt-tog{background:var(--accent);color:var(--accent-ink)}
+.doc-text .opt-seg:not(.off) > .opt-tog::before{content:"−"}
+.pop{position:fixed;z-index:60;background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 12px 32px -8px rgb(24 24 27 / .25),0 2px 6px rgb(24 24 27 / .08);padding:8px;display:flex;flex-direction:column;gap:2px;max-height:min(420px,70vh);overflow:auto}
+.pop-title{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);padding:6px 8px}
+.pop-opt{display:flex;align-items:flex-start;gap:10px;text-align:left;padding:8px 10px;border-radius:9px;border:0;background:none;font-size:13.5px;line-height:1.35;color:var(--ink2)}
+.pop-opt:hover,.pop-opt:focus-visible{background:var(--accent-soft);color:var(--accent-text);outline:none}
+.pop-opt kbd{flex:none;margin-top:1px}
+.pop-opt[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent-text);font-weight:600}
+.pop-opt[aria-pressed="true"] kbd{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.pop-foot{display:flex;gap:6px;flex-wrap:wrap;border-top:1px solid var(--line);margin-top:6px;padding-top:8px}
+@media (max-width:899px){ .doc-text{padding:16px 16px 20px;font-size:14px} .guide .pending{margin-left:0} .doc-page{padding-bottom:110px} }
 
 /* pages: editor, import, welcome */
 .page{height:100%;overflow:auto}
@@ -306,6 +338,7 @@ pre.sample{margin:0;font-family:var(--f-mono);font-size:11.5px;background:var(--
 </div>
 
 <div class="copybar" id="copybar"></div>
+<div class="pop" id="pop" hidden role="dialog" aria-label="Elegir opción"></div>
 <nav class="bottomnav" aria-label="Navegación">
   <div class="in">
     <button data-action="home" aria-current="true" id="navList"><span id="navListIco"></span>Plantillas</button>
@@ -555,81 +588,26 @@ function syntaxHelp(){
   return `<p class="syntax"><b>Cómo se escriben los campos.</b> <code>{{Edad}}</code> hueco de texto · <code>{{Lado: derecha | izquierda}}</code> opciones · <code>{{Hallazgos*: a | b | c}}</code> varias opciones · <code>{{Fiebre: Afebril | Fiebre de … ºC}}</code> la opción con «…» abre un hueco · <code>{{Fecha}}</code> calendario · <code>[[- Drenaje de Penrose…]]</code> paso opcional, solo se copia si se marca. Un mismo nombre de campo se rellena una sola vez.</p>`;
 }
 function detailSig(o){ return [o.id,o.title,o.type,o.section,(o.tags||[]).join(','),o.body,o.recs,o.fav,o.updatedAt].join('|'); }
-function fieldHTML(f, i, vals){
-  const v=vals[f.key]; const id=`fld-${i}`;
-  if(f.options){
-    const sel = f.multi ? (Array.isArray(v)?v:[]) : v;
-    const long = f.options.some(x=>x.length>26) || f.options.length>4;
-    const gapOpts = f.options.some(hasGap);
-    const gapOn = f.multi ? sel.some(hasGap) : hasGap(sel);
-    return `<div class="f ${long?'wide':''}" data-k="${esc(f.key)}"><span class="lbl" id="${id}">${esc(f.label)}${f.multi?' <span class="multi">· varias</span>':''}</span>
-      <div class="opts" role="group" aria-labelledby="${id}">${f.options.map(op=>{ const on=f.multi?sel.includes(op):sel===op; return `<button type="button" class="opt" data-action="opt" data-k="${esc(f.key)}" data-v="${esc(op)}" aria-pressed="${on}">${esc(op)}</button>`; }).join('')}</div>
-      ${gapOpts?`<input class="inp gapin" id="${id}-x" data-gap="${esc(f.key)}" placeholder="Completa «…»" value="${esc(vals[f.key+'::x']||'')}" autocomplete="off" ${gapOn?'':'hidden'}>`:''}</div>`;
-  }
-  return `<div class="f" data-k="${esc(f.key)}"><label for="${id}">${esc(f.label)}</label>
-    <input class="inp" id="${id}" data-field="${esc(f.key)}" type="${f.isDate?'date':'text'}" value="${esc(v||'')}" autocomplete="off"></div>`;
+const contentSig = o => (o.body||'')+'\u0001'+(o.recs||'');
+let FMAP = {};   /* fields of the open template, by key */
+
+/* ---------- inline document: everything is filled inside the text ---------- */
+function fldHTML(raw){
+  const l=tokenLabel(raw), k=norm(l), f=FMAP[k];
+  if(!f) return esc(l);
+  if(f.isDate){ const d=new Date(); const v=`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`; return `<mark class="fld" data-k="${esc(k)}" data-label="${esc(l)}" data-t="text">${esc(v)}</mark>`; }
+  const t = f.options ? (f.multi?'multi':'choice') : 'text';
+  return `<mark class="fld hole${f.options?' choice':''}" data-k="${esc(k)}" data-label="${esc(l)}" data-t="${t}">${esc(l)}</mark>`;
 }
-function optList(list, title, vals){
-  if(!list.length) return '';
-  return `<div class="f"><span class="lbl">${esc(title)} <span class="multi">· solo se copian los marcados</span></span>
-    <div class="optsteps">${list.map(x=>`<button type="button" class="optstep" data-action="optstep" data-k="${x.key}" aria-pressed="${!!vals[x.key]}">${ico('check')}<span>${esc(x.label)}</span></button>`).join('')}</div></div>`;
+/* uppercase section titles («ANESTESIA:», «TÉCNICA:»…) shown in bold; the copied text stays plain */
+const HEADING = /(^|\n)([A-ZÁÉÍÓÚÜÑ][A-ZÁÉÍÓÚÜÑ0-9 \/().,±+-]{1,70}:)/g;
+const txtHTML = t => esc(t).replace(HEADING, (a,pre,h)=>`${pre}<strong class="hd">${h}</strong>`);
+function inlineHTML(src){
+  let html='', last=0, m; TOKEN.lastIndex=0;
+  while((m=TOKEN.exec(src))){ html+=txtHTML(src.slice(last,m.index)); html+=fldHTML(m[1]); last=TOKEN.lastIndex; }
+  return html+txtHTML(src.slice(last));
 }
-function renderDetail(o){
-  state.sig=detailSig(o);
-  const fields=parseFields(allText(o));
-  const opts=parseOptionals(o.body), ropts=parseOptionals(o.recs,'ropt:');
-  const hasRecs=!!(o.recs&&o.recs.trim());
-  const vals = state.values[o.id] ||= {};
-  fields.forEach(f=>{ if(f.isDate && vals[f.key]==null){ vals[f.key]=new Date().toISOString().slice(0,10); } });
-  const tags=(o.tags||[]).filter(t=>t!=='SurgiDocs').slice(0,4).map(t=>`<span class="tg">${esc(t)}</span>`).join('');
-  const w=state.canWrite;
-  const copyBody=`<button class="btn sm primary" data-action="copy" data-part="body" title="Copiar (${KEY_COPY})">${ico('copy')}Copiar</button>`;
-  const copyRecs=`<button class="btn sm outline" data-action="copy" data-part="recs" title="Copiar (${KEY_COPY_RECS})">${ico('copy')}Copiar</button>`;
-  $('#main').innerHTML=`<div class="work">
-    <section class="form-pane" id="formPane" aria-label="Rellenar plantilla">
-      <button class="back" data-action="home">${ico('back')}Plantillas</button>
-      <header class="form-head t-${esc(o.type)}">
-        <div class="crumbs"><span class="dot"></span><span>${esc(TYPES[o.type]?.label||'')}</span><span class="sep">/</span><span title="${esc(SEC_NAMES[o.section]||'')}">${esc(o.section||'General')}</span>${tags}</div>
-        <h1>${esc(o.title)}</h1>
-        <div class="doc-actions">
-          ${w?`<button class="btn sm fav" data-action="fav" aria-pressed="${!!o.fav}">${ico('star', o.fav?'filled':'')}${o.fav?'Favorita':'Favorita'}</button>
-          <button class="btn sm" data-action="edit">${ico('edit')}Editar</button>
-          <button class="btn sm" data-action="dup">${ico('dup')}Duplicar</button>`:''}
-          <button class="btn sm reset" id="btnReset" data-action="reset" title="Borra lo rellenado y lo escrito a mano y deja la plantilla como recién abierta">${ico('reset')}Reiniciar plantilla</button>
-        </div>
-      </header>
-      ${fields.length?`<div class="form-sec"><div class="sec-head"><h2>Campos<small>${fields.length}</small></h2></div>
-        <div class="field-grid">${fields.map((f,i)=>fieldHTML(f,i,vals)).join('')}</div></div>`:''}
-      ${opts.length||ropts.length?`<div class="form-sec"><div class="sec-head"><h2>Pasos opcionales</h2></div>
-        ${optList(opts, hasRecs?'En el informe':'En el texto', vals)}${optList(ropts, 'En las recomendaciones al alta', vals)}</div>`:''}
-      ${!fields.length&&!opts.length&&!ropts.length?`<p class="hint">Esta plantilla no tiene campos para rellenar. Cópiala tal cual desde la derecha.</p>`:''}
-      <p class="hint">Lo que escribes aquí no se guarda en ningún sitio y se borra al recargar. No hace falta introducir datos identificativos del paciente.</p>
-    </section>
-    <aside class="preview-pane" id="previewPane" aria-label="Texto que se copiará">
-      <div class="pv-head"><span class="pv-title">Texto que se copiará</span>
-        <span class="sp"></span>
-        ${fields.length?`<span class="pv-progress"><span id="fcount"></span><span class="bar-track"><i id="fprog"></i></span></span>`:''}</div>
-      <article class="doc t-${esc(o.type)}">
-        <div class="doc-head"><span class="dot"></span><b>${hasRecs?(o.type==='quirurgica'?'Protocolo quirúrgico':'Informe'):esc(TYPES[o.type]?.label||'Texto')}</b><span class="sp"></span>${copyBody}</div>
-        <div class="doc-text" id="preview" data-part="body" role="textbox" aria-multiline="true" aria-label="Texto del informe, editable" spellcheck="true"></div>
-      </article>
-      ${hasRecs?`<article class="doc recs">
-        <div class="doc-head"><span class="dot"></span><b>Recomendaciones al alta</b><span class="sp"></span>${copyRecs}</div>
-        <div class="doc-text" id="preview-recs" data-part="recs" role="textbox" aria-multiline="true" aria-label="Recomendaciones al alta, editables" spellcheck="true"></div>
-      </article>`:''}
-      <p class="pv-note">Puedes escribir y borrar directamente en este texto: se copia tal como lo ves. Lo que escribas a mano se mantiene aunque sigas rellenando campos. Los huecos en rosa están vacíos y se copian entre corchetes. Atajos: <kbd>${KEY_COPY}</kbd> copia el informe${hasRecs?` · <kbd>${KEY_COPY_RECS}</kbd> las recomendaciones`:''}.</p>
-    </aside>
-  </div>`;
-  mountDocs(o, fields);
-  $('#copybar').innerHTML = hasRecs
-    ? `<button class="btn primary" data-action="copy" data-part="body">${ico('copy')}Copiar informe</button><button class="btn outline" data-action="copy" data-part="recs">${ico('copy')}Copiar recomendaciones</button>`
-    : `<button class="btn primary" data-action="copy" data-part="body">${ico('copy')}Copiar texto</button>`;
-  updatePreview();
-}
-/* The preview is a live, editable document. It is built once per template and then
-   refreshed in place: marks update when fields change, optional steps show or hide,
-   and anything typed by hand stays put until the template is reset. */
-function docHTML(src, vals, fmap, prefix){
+function docHTML(src, prefix){
   src=String(src||'').replace(/\s+$/,'');
   let html='', last=0, m, i=0; OPT.lastIndex=0;
   while((m=OPT.exec(src))){
@@ -638,48 +616,164 @@ function docHTML(src, vals, fmap, prefix){
     const lineEnd = end===src.length || src[end]==='\n';
     if(lineStart && lineEnd && end<src.length){ post='\n'; end+=1; }
     else if(!lineStart && src[start-1]===' '){ start-=1; pre=' '; }
-    html += tokensHTML(src.slice(last,start), vals, fmap);
+    html += inlineHTML(src.slice(last,start));
     const k=prefix+(i++);
-    html += `<span class="opt-seg${vals[k]?'':' off'}" data-opt="${k}">${esc(pre)}${tokensHTML(m[1], vals, fmap)}${esc(post)}</span>`;
+    html += `${esc(pre)}<span class="opt-seg off" data-opt="${k}"><span class="opt-tog ui" contenteditable="false" data-action="tog" role="button" tabindex="-1" title="Incluir este paso"></span>${inlineHTML(m[1])}${esc(post)}</span>`;
     last=end; OPT.lastIndex=m.index+m[0].length;
   }
-  return html + tokensHTML(src.slice(last), vals, fmap);
+  return html + inlineHTML(src.slice(last));
 }
 let PLAINTEXT_OK=null;
 function makeEditable(el){
   if(PLAINTEXT_OK===null){ const t=document.createElement('div'); try{ t.contentEditable='plaintext-only'; }catch{} PLAINTEXT_OK = t.contentEditable==='plaintext-only'; }
   el.contentEditable = PLAINTEXT_OK ? 'plaintext-only' : 'true';
 }
-const contentSig = o => (o.body||'')+'\u0001'+(o.recs||'');
-function mountDocs(o, fields){
-  const fmap=Object.fromEntries(fields.map(f=>[f.key,f])); const vals=state.values[o.id]||{};
+function renderDetail(o){
+  state.sig=detailSig(o);
+  const fields=parseFields(allText(o));
+  FMAP=Object.fromEntries(fields.map(f=>[f.key,f]));
+  const hasRecs=!!(o.recs&&o.recs.trim());
+  const tags=(o.tags||[]).filter(t=>t!=='SurgiDocs').slice(0,4).map(t=>`<span class="tg">${esc(t)}</span>`).join('');
+  const w=state.canWrite;
+  const copyBody=`<button class="btn sm primary" data-action="copy" data-part="body" title="Copiar (${KEY_COPY})">${ico('copy')}Copiar</button>`;
+  const copyRecs=`<button class="btn sm outline" data-action="copy" data-part="recs" title="Copiar (${KEY_COPY_RECS})">${ico('copy')}Copiar</button>`;
+  $('#main').innerHTML=`<div class="page" id="docPage"><div class="page-in doc-page">
+    <button class="back" data-action="home">${ico('back')}Plantillas</button>
+    <header class="form-head t-${esc(o.type)}">
+      <div class="crumbs"><span class="dot"></span><span>${esc(TYPES[o.type]?.label||'')}</span><span class="sep">/</span><span title="${esc(SEC_NAMES[o.section]||'')}">${esc(o.section||'General')}</span>${tags}</div>
+      <h1>${esc(o.title)}</h1>
+      <div class="doc-actions">
+        ${w?`<button class="btn sm fav" data-action="fav" aria-pressed="${!!o.fav}">${ico('star', o.fav?'filled':'')}Favorita</button>
+        <button class="btn sm" data-action="edit">${ico('edit')}Editar</button>
+        <button class="btn sm" data-action="dup">${ico('dup')}Duplicar</button>`:''}
+        <button class="btn sm reset" id="btnReset" data-action="reset" title="Deja la plantilla como recién abierta">${ico('reset')}Reiniciar plantilla</button>
+      </div>
+    </header>
+    <div class="guide">
+      <span><mark class="fld hole demo">hueco</mark> pulsa y escribe</span>
+      <span><mark class="fld hole choice demo">opción</mark> pulsa y elige</span>
+      <span><span class="opt-tog demo"></span> incluye un paso opcional</span>
+      <span><kbd>Tab</kbd> siguiente hueco</span>
+      <span class="pending" id="pending"></span>
+    </div>
+    <article class="doc t-${esc(o.type)}">
+      <div class="doc-head"><span class="dot"></span><b>${hasRecs?(o.type==='quirurgica'?'Protocolo quirúrgico':'Informe'):esc(TYPES[o.type]?.label||'Texto')}</b><span class="sp"></span>${copyBody}</div>
+      <div class="doc-text" id="preview" data-part="body" role="textbox" aria-multiline="true" aria-label="Texto del informe, editable" spellcheck="true"></div>
+    </article>
+    ${hasRecs?`<article class="doc recs">
+      <div class="doc-head"><span class="dot"></span><b>Recomendaciones al alta</b><span class="sp"></span>${copyRecs}</div>
+      <div class="doc-text" id="preview-recs" data-part="recs" role="textbox" aria-multiline="true" aria-label="Recomendaciones al alta, editables" spellcheck="true"></div>
+    </article>`:''}
+    <p class="pv-note">Todo el texto se puede escribir y borrar con el teclado y se copia tal como lo ves. Los huecos que queden en rosa se copian entre corchetes; los pasos tachados no se copian. No hace falta introducir datos identificativos del paciente. Atajos: <kbd>${KEY_COPY}</kbd> copia el informe${hasRecs?` · <kbd>${KEY_COPY_RECS}</kbd> las recomendaciones`:''}.</p>
+  </div></div>`;
   const saved = state.docs[o.id] && state.docs[o.id].sig===contentSig(o) ? state.docs[o.id] : null;
-  const p=$('#preview'); if(p){ p.innerHTML = saved ? saved.body : docHTML(o.body, vals, fmap, 'opt:'); makeEditable(p); }
-  const r=$('#preview-recs'); if(r){ r.innerHTML = saved && saved.recs!=null ? saved.recs : docHTML(o.recs, vals, fmap, 'ropt:'); makeEditable(r); }
-  $('#btnReset') && $('#btnReset').classList.toggle('dirty', !!saved);
-  updatePreview();
+  const p=$('#preview'); p.innerHTML = saved ? saved.body : docHTML(o.body,'opt:'); makeEditable(p);
+  const r=$('#preview-recs'); if(r){ r.innerHTML = saved && saved.recs!=null ? saved.recs : docHTML(o.recs,'ropt:'); makeEditable(r); }
+  $('#copybar').innerHTML = hasRecs
+    ? `<button class="btn primary" data-action="copy" data-part="body">${ico('copy')}Copiar informe</button><button class="btn outline" data-action="copy" data-part="recs">${ico('copy')}Copiar recomendaciones</button>`
+    : `<button class="btn primary" data-action="copy" data-part="body">${ico('copy')}Copiar texto</button>`;
+  refreshDoc(!!saved);
 }
-function updatePreview(){
+function liveMarks(){ return [...document.querySelectorAll('.doc-text mark.fld')].filter(m=>!m.closest('.off')); }
+function refreshDoc(dirty){
+  const n=new Set(liveMarks().filter(m=>m.classList.contains('hole')).map(m=>m.dataset.k)).size;
+  const el=$('#pending'); if(el){ el.textContent = n ? `Quedan ${n} hueco${n===1?'':'s'}` : 'Todo relleno'; el.classList.toggle('done', !n); }
+  document.querySelectorAll('.doc-text .opt-seg').forEach(sg=>{ const t=sg.querySelector(':scope > .opt-tog'); if(t) t.title = sg.classList.contains('off') ? 'Incluir este paso' : 'Quitar este paso'; });
+  const rb=$('#btnReset'); if(rb && dirty!==undefined) rb.classList.toggle('dirty', !!dirty);
+}
+function saveDocs(){
   const o=state.items.get(state.currentId); if(!o) return;
-  const fields=parseFields(allText(o)); const vals=state.values[o.id]||{};
-  const fmap=Object.fromEntries(fields.map(f=>[f.key,f]));
-  document.querySelectorAll('.doc-text mark[data-k]').forEach(mk=>{
-    if(mk.dataset.manual) return;
-    const t=valueOf(fmap[mk.dataset.k], vals);
-    if(t){ if(mk.textContent!==t) mk.textContent=t; mk.classList.remove('hole'); }
-    else { const l=mk.dataset.label||''; if(mk.textContent!==l) mk.textContent=l; mk.classList.add('hole'); }
-  });
-  document.querySelectorAll('.doc-text .opt-seg[data-opt]').forEach(sg=>sg.classList.toggle('off', !vals[sg.dataset.opt]));
-  const done=fields.filter(f=>valueOf(f,vals)).length;
-  const c=$('#fcount'); if(c) c.textContent=`${done} de ${fields.length} campos`;
-  const pr=$('#fprog'); if(pr) pr.style.width=(fields.length?done/fields.length*100:0)+'%';
-  if(state.docs[o.id]) saveDocs(o);
-  if(state.hlKey) highlight(state.hlKey, false);
-}
-function saveDocs(o){
   const p=$('#preview'), r=$('#preview-recs');
   state.docs[o.id]={sig:contentSig(o), body:p?p.innerHTML:'', recs:r?r.innerHTML:null};
-  const rb=$('#btnReset'); if(rb) rb.classList.add('dirty');
+  refreshDoc(true);
+}
+function setMarkValue(mk, v){
+  if(v){ mk.textContent=v; mk.classList.remove('hole'); }
+  else { mk.textContent=mk.dataset.label||''; mk.classList.add('hole'); }
+}
+function syncKey(src){
+  const k=src.dataset.k; const filled=!src.classList.contains('hole'); const v=src.textContent;
+  document.querySelectorAll(`.doc-text mark.fld[data-k="${CSS.escape(k)}"]`).forEach(m=>{ if(m!==src) setMarkValue(m, filled?v:''); });
+}
+function selectNode(node, from, to){
+  const sel=window.getSelection(); const rg=document.createRange();
+  if(from==null){ rg.selectNodeContents(node); }
+  else { const tn=node.firstChild||node; rg.setStart(tn,from); rg.setEnd(tn,to); }
+  sel.removeAllRanges(); sel.addRange(rg);
+}
+function caretAfter(node){
+  const sel=window.getSelection(); const rg=document.createRange(); rg.setStartAfter(node); rg.collapse(true); sel.removeAllRanges(); sel.addRange(rg);
+}
+function focusMark(mk){
+  const ed=mk.closest('.doc-text'); if(document.activeElement!==ed) ed.focus({preventScroll:true});
+  mk.scrollIntoView({block:'nearest',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+  if(mk.classList.contains('choice') || mk.dataset.t==='choice' || mk.dataset.t==='multi'){ selectNode(mk); openChoice(mk); }
+  else selectNode(mk);
+}
+function nextHole(dir){
+  const holes=liveMarks().filter(m=>m.classList.contains('hole'));
+  if(!holes.length){ toast('No quedan huecos por rellenar'); return; }
+  const sel=window.getSelection(); const anchor=sel.rangeCount?sel.getRangeAt(0).startContainer:null;
+  let pick=null;
+  if(anchor){
+    const cur=(anchor.nodeType===1?anchor:anchor.parentElement).closest('mark.fld');
+    if(dir>0) pick=holes.find(h=>h!==cur && (anchor.compareDocumentPosition(h) & Node.DOCUMENT_POSITION_FOLLOWING) && !h.contains(anchor));
+    else pick=[...holes].reverse().find(h=>h!==cur && (anchor.compareDocumentPosition(h) & Node.DOCUMENT_POSITION_PRECEDING) && !h.contains(anchor));
+  }
+  pick = pick || (dir>0 ? holes[0] : holes[holes.length-1]);
+  focusMark(pick);
+}
+
+/* ---------- choice menu ---------- */
+function positionPop(){
+  const pop=$('#pop'); const mk=pop && pop._mark; if(!mk || pop.hidden) return;
+  if(!mk.isConnected){ closeChoice(); return; }
+  const r=mk.getBoundingClientRect(); const pw=Math.min(380, innerWidth-24);
+  pop.style.width=pw+'px';
+  const left=Math.min(Math.max(12, r.left), innerWidth-pw-12);
+  let top=r.bottom+6; pop.style.left=left+'px'; pop.style.top=top+'px';
+  const ph=pop.offsetHeight; if(top+ph>innerHeight-12 && r.top-ph-6>12){ pop.style.top=(r.top-ph-6)+'px'; }
+}
+function closeChoice(){ const p=$('#pop'); if(p){ p.hidden=true; p._mark=null; } }
+function openChoice(mk){
+  const f=FMAP[mk.dataset.k]; if(!f || !f.options) return;
+  const pop=$('#pop'); pop._mark=mk;
+  const cur=mk.classList.contains('hole')?'':mk.textContent;
+  const multi=f.multi; const chosen = multi ? new Set(cur.split(/, | y /).map(s=>s.trim()).filter(Boolean)) : null;
+  pop.innerHTML=`<div class="pop-title">${esc(f.label)}${multi?' · varias':''}</div>
+    ${f.options.map((op,i)=>`<button type="button" class="pop-opt" data-i="${i}" ${multi?`aria-pressed="${chosen.has(op.replace(GAP,'').trim())||chosen.has(op)}"`:''}>${i<9?`<kbd>${i+1}</kbd>`:''}<span>${esc(op)}</span></button>`).join('')}
+    <div class="pop-foot">${multi?`<button type="button" class="btn sm primary" data-pop="done">Hecho</button>`:''}<button type="button" class="btn sm ghost" data-pop="type">Escribir otro texto</button>${!mk.classList.contains('hole')?`<button type="button" class="btn sm ghost" data-pop="clear">Vaciar</button>`:''}</div>`;
+  pop.hidden=false; positionPop();
+  const first=pop.querySelector('.pop-opt'); first && first.focus({preventScroll:true});
+}
+function applyChoice(mk, value, selectGap){
+  setMarkValue(mk, value); syncKey(mk);
+  const ed=mk.closest('.doc-text'); ed.focus({preventScroll:true});
+  const gi=value.search(GAP);
+  if(selectGap && gi>=0){ const len=(value.match(GAP)||[''])[0].length; selectNode(mk, gi, gi+len); }
+  else caretAfter(mk);
+  saveDocs();
+}
+function choosePop(i){
+  const pop=$('#pop'), mk=pop._mark; if(!mk) return;
+  const f=FMAP[mk.dataset.k]; const op=f.options[i];
+  if(f.multi){ const b=pop.querySelector(`.pop-opt[data-i="${i}"]`); b.setAttribute('aria-pressed', b.getAttribute('aria-pressed')!=='true'); return; }
+  closeChoice(); applyChoice(mk, op, true);
+}
+function finishMulti(){
+  const pop=$('#pop'), mk=pop._mark; if(!mk) return;
+  const f=FMAP[mk.dataset.k];
+  const picks=[...pop.querySelectorAll('.pop-opt[aria-pressed="true"]')].map(b=>f.options[+b.dataset.i]);
+  closeChoice(); applyChoice(mk, joinMulti(picks), true);
+}
+
+async function copyPart(part){
+  const o=state.items.get(state.currentId); if(!o) return;
+  if(part==='recs' && !(o.recs&&o.recs.trim())) return;
+  const el = part==='recs' ? $('#preview-recs') : $('#preview');
+  const txt = serializeDoc(el);
+  const ok=await copyText(txt, part==='recs'?'Recomendaciones copiadas':(o.recs?'Informe copiado':'Texto copiado'));
+  if(ok && state.canWrite){ patchItem(o.id,{uses:(o.uses||0)+1,lastUsed:nowISO()}).then(()=>renderList()).catch(()=>{}); }
 }
 function serializeDoc(el){
   if(!el) return '';
@@ -687,33 +781,17 @@ function serializeDoc(el){
   (function walk(n){
     if(n.nodeType===3){ out+=n.nodeValue; return; }
     if(n.nodeType!==1) return;
-    if(n.classList.contains('off')) return;
+    if(n.classList.contains('off') || n.classList.contains('ui')) return;
     if(n.tagName==='BR'){ out+='\n'; return; }
-    if(n.tagName==='MARK' && n.classList.contains('hole') && !n.dataset.manual){ out+='['+(n.dataset.label||n.textContent)+']'; return; }
+    if(n.tagName==='MARK' && n.classList.contains('hole')){ out+='['+(n.dataset.label||n.textContent)+']'; return; }
     const block = n!==el && /^(DIV|P)$/.test(n.tagName);
     if(block && out && !out.endsWith('\n')) out+='\n';
     n.childNodes.forEach(walk);
   })(el);
-  return out.replace(/ /g,' ').replace(/[ \t]+\n/g,'\n').replace(/\n{3,}/g,'\n\n').replace(/^\n+|\s+$/g,'');
+  return out.replace(/\u200b/g,'').replace(/\u00a0/g,' ').replace(/[ \t]+\n/g,'\n').replace(/\n{3,}/g,'\n\n').replace(/^\n+|\s+$/g,'');
 }
-function highlight(k, scroll=true){
-  document.querySelectorAll('.doc-text mark.hl').forEach(m=>m.classList.remove('hl'));
-  document.querySelectorAll('.f.is-active').forEach(f=>f.classList.remove('is-active'));
-  state.hlKey=k||null; if(!k) return;
-  const f=document.querySelector(`.f[data-k="${CSS.escape(k)}"]`); if(f) f.classList.add('is-active');
-  const marks=document.querySelectorAll(`.doc-text mark[data-k="${CSS.escape(k)}"]`);
-  marks.forEach(m=>m.classList.add('hl'));
-  if(scroll && marks[0] && isDesktop()) marks[0].scrollIntoView({block:'nearest',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
-}
-async function copyPart(part){
-  const o=state.items.get(state.currentId); if(!o) return;
-  if(part==='recs' && !(o.recs&&o.recs.trim())) return;
-  const el = part==='recs' ? $('#preview-recs') : $('#preview');
-  let txt = serializeDoc(el);
-  if(!el){ const fields=parseFields(allText(o)); const vals=state.values[o.id]||{}; txt = part==='recs' ? fillText(o.recs,vals,fields,'ropt:') : fillText(o.body,vals,fields); }
-  const ok=await copyText(txt, part==='recs'?'Recomendaciones copiadas':(o.recs?'Informe copiado':'Texto copiado'));
-  if(ok && state.canWrite){ patchItem(o.id,{uses:(o.uses||0)+1,lastUsed:nowISO()}).then(()=>renderList()).catch(()=>{}); }
-}
+function updatePreview(){ refreshDoc(); }
+function highlight(){}
 
 /* ---------- editor ---------- */
 function renderEditor(o){
@@ -893,15 +971,32 @@ function applyWriteMode(){
 }
 
 /* ---------- events ---------- */
+document.addEventListener('mousedown', ev=>{
+  /* keep the caret in the text when using the inline toggle; close the menu on outside clicks */
+  if(ev.target.closest && ev.target.closest('.opt-tog')) ev.preventDefault();
+  const pop=$('#pop'); if(pop && !pop.hidden && !pop.contains(ev.target) && !(ev.target.closest && ev.target.closest('mark.fld'))) closeChoice();
+});
 document.addEventListener('click', async ev=>{
-  const b=ev.target.closest('[data-action]');
-  const mk=ev.target.closest('.doc-text mark');
-  if(mk && !b){
-    const f=document.querySelector(`.f[data-k="${CSS.escape(mk.dataset.k)}"]`);
-    if(f && isDesktop()) f.scrollIntoView({block:'nearest',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
-    highlight(mk.dataset.k,false);
+  const pb=ev.target.closest('#pop [data-pop], #pop .pop-opt');
+  if(pb){
+    const pop=$('#pop'); const mk=pop._mark;
+    if(pb.classList.contains('pop-opt')) choosePop(+pb.dataset.i);
+    else if(pb.dataset.pop==='done') finishMulti();
+    else if(pb.dataset.pop==='type' && mk){ closeChoice(); const ed=mk.closest('.doc-text'); ed.focus({preventScroll:true}); if(mk.classList.contains('hole')){ mk.textContent=''; mk.classList.remove('hole'); mk.textContent='\u200b'; } selectNode(mk); saveDocs(); }
+    else if(pb.dataset.pop==='clear' && mk){ closeChoice(); setMarkValue(mk,''); syncKey(mk); mk.closest('.doc-text').focus({preventScroll:true}); selectNode(mk); saveDocs(); }
     return;
   }
+  const tg=ev.target.closest('.doc-text .opt-tog');
+  if(tg){ const sg=tg.closest('.opt-seg'); sg.classList.toggle('off'); saveDocs(); return; }
+  const mk=ev.target.closest('.doc-text mark.fld');
+  if(mk){
+    if(mk.closest('.off')) return;
+    const choice = mk.dataset.t==='choice' || mk.dataset.t==='multi';
+    if(choice){ selectNode(mk); openChoice(mk); return; }
+    if(mk.classList.contains('hole')){ selectNode(mk); }
+    return;
+  }
+  const b=ev.target.closest('[data-action]');
   if(!b) return;
   const a=b.dataset.action;
   if(a!=='del'){ const armed=document.querySelector('.btn.armed'); if(armed){ armed.classList.remove('armed'); armed.innerHTML=`${ico('trash')}Borrar`; } }
@@ -909,7 +1004,7 @@ document.addEventListener('click', async ev=>{
     case 'home': go('list'); break;
     case 'new': if(state.canWrite) go('edit',null); break;
     case 'import': go('import'); break;
-    case 'open': go('detail',b.dataset.id); break;
+    case 'open': closeChoice(); go('detail',b.dataset.id); break;
     case 'open-current': state.currentId?go('detail',state.currentId):go('list'); break;
     case 'type': state.type=b.dataset.v; renderList(); break;
     case 'sec': state.section=b.dataset.v; renderList(); break;
@@ -922,26 +1017,15 @@ document.addEventListener('click', async ev=>{
       break; }
     case 'fav': {
       const o=state.items.get(state.currentId); if(!o) break;
-      try{ await patchItem(o.id,{fav:!o.fav}); renderDetail(state.items.get(o.id)); renderList(); }catch(e){ toast(dbErr(e)); }
+      try{ saveDocs(); await patchItem(o.id,{fav:!o.fav}); renderDetail(state.items.get(o.id)); renderList(); }catch(e){ toast(dbErr(e)); }
       break; }
-    case 'opt': {
-      const o=state.items.get(state.currentId); if(!o) break;
-      const vals=state.values[o.id]||={}; const k=b.dataset.k, v=b.dataset.v;
-      const f=parseFields(allText(o)).find(x=>x.key===k);
-      if(f&&f.multi){ const arr=Array.isArray(vals[k])?[...vals[k]]:[]; const i=arr.indexOf(v); i>=0?arr.splice(i,1):arr.push(v); vals[k]=f.options.filter(x=>arr.includes(x)); }
-      else vals[k]= vals[k]===v ? '' : v;
-      b.parentElement.querySelectorAll('.opt').forEach(btn=>{ const on=Array.isArray(vals[k])?vals[k].includes(btn.dataset.v):vals[k]===btn.dataset.v; btn.setAttribute('aria-pressed',on); });
-      const gi=b.closest('.f').querySelector('.gapin');
-      if(gi){ const show=Array.isArray(vals[k])?vals[k].some(hasGap):hasGap(vals[k]); const was=gi.hidden; gi.hidden=!show; if(show && was) gi.focus(); }
-      state.hlKey=k; updatePreview(); highlight(k); break; }
-    case 'optstep': toggleOpt(b.dataset.k); break;
-    case 'reset': case 'clear': { const o=state.items.get(state.currentId); if(!o) break; state.values[o.id]={}; delete state.docs[o.id]; state.hlKey=null; renderDetail(o); $('#formPane') && ($('#formPane').scrollTop=0); $('#previewPane') && ($('#previewPane').scrollTop=0); toast('Plantilla reiniciada'); break; }
+    case 'reset': { const o=state.items.get(state.currentId); if(!o) break; closeChoice(); delete state.docs[o.id]; renderDetail(o); $('#docPage') && ($('#docPage').scrollTop=0); toast('Plantilla reiniciada'); break; }
     case 'copy': copyPart(b.dataset.part||'body'); break;
     case 'ins': insertAtCursor(b.dataset.v,b.dataset.sel); break;
     case 'del': {
       if(!b.classList.contains('armed')){ b.classList.add('armed'); b.innerHTML=`${ico('trash')}Pulsa otra vez para borrar`; break; }
       const id=state.currentId;
-      try{ await deleteItem(id); delete state.values[id]; toast('Plantilla borrada'); go('list'); }catch(e){ toast(dbErr(e)); }
+      try{ await deleteItem(id); delete state.docs[id]; toast('Plantilla borrada'); go('list'); }catch(e){ toast(dbErr(e)); }
       break; }
     case 'do-import': doImport(); break;
     case 'export-copy': copyText(exportJSON(),'JSON copiado'); break;
@@ -966,16 +1050,21 @@ document.addEventListener('click', async ev=>{
 document.addEventListener('input', ev=>{
   const t=ev.target;
   if(t.classList && t.classList.contains('doc-text')){
-    const o=state.items.get(state.currentId); if(!o) return;
     const sel=window.getSelection(); const n=sel && sel.anchorNode;
-    const mk=n && (n.nodeType===1?n:n.parentElement)?.closest('mark');
-    if(mk && t.contains(mk)){ mk.dataset.manual='1'; mk.classList.remove('hole'); }
-    t.querySelectorAll('mark:not([data-manual])').forEach(m=>{ if(m.textContent==='' ) m.dataset.manual='1'; });
-    saveDocs(o); return;
+    const mk=n && (n.nodeType===1?n:n.parentElement)?.closest('mark.fld');
+    if(mk && t.contains(mk)){
+      let txt=mk.textContent.replace(/\u200b/g,'');
+      if(mk.classList.contains('hole')){
+        /* typed into a placeholder: keep only what was typed */
+        const l=mk.dataset.label||''; const i=txt.indexOf(l);
+        if(i>=0){ txt=txt.slice(0,i)+txt.slice(i+l.length); mk.textContent=txt; const tn=mk.firstChild; if(tn){ const r=document.createRange(); r.setStart(tn,txt.length); r.collapse(true); sel.removeAllRanges(); sel.addRange(r); } }
+      }
+      if(txt.trim()) mk.classList.remove('hole');
+      syncKey(mk);
+    }
+    saveDocs(); return;
   }
   if(t.id==='q'){ state.q=t.value; renderList(); return; }
-  if(t.dataset && t.dataset.field){ const o=state.items.get(state.currentId); if(!o) return; (state.values[o.id]||={})[t.dataset.field]=t.value; updatePreview(); return; }
-  if(t.dataset && t.dataset.gap){ const o=state.items.get(state.currentId); if(!o) return; (state.values[o.id]||={})[t.dataset.gap+'::x']=t.value; updatePreview(); return; }
   if(t.id==='ed-body'||t.id==='ed-recs'){ updateDetected(); $('#edErr').textContent=''; return; }
   if(t.id==='ed-title'){ $('#edErr').textContent=''; return; }
   if(t.id==='imp-text') updateImportPreview();
@@ -989,8 +1078,6 @@ document.addEventListener('change', ev=>{
 document.addEventListener('focusin', ev=>{
   const t=ev.target;
   if(t.matches && t.matches('textarea[data-ed]')) lastEd=t.id;
-  const f=t.closest && t.closest('#formPane .f[data-k]');
-  if(f) highlight(f.dataset.k);
 });
 document.addEventListener('paste', ev=>{
   const t=ev.target.closest && ev.target.closest('.doc-text');
@@ -999,18 +1086,26 @@ document.addEventListener('paste', ev=>{
   document.execCommand('insertText', false, text);
 });
 document.addEventListener('submit', ev=>{ if(ev.target.id==='edForm') submitEditor(ev); });
-function toggleOpt(k){
-  const o=state.items.get(state.currentId); if(!o || !k) return;
-  const vals=state.values[o.id]||={}; vals[k]=!vals[k];
-  const btn=document.querySelector(`.optstep[data-k="${CSS.escape(k)}"]`); if(btn) btn.setAttribute('aria-pressed',!!vals[k]);
-  updatePreview();
-}
 document.addEventListener('keydown', ev=>{
+  const pop=$('#pop');
+  if(pop && !pop.hidden && pop.contains(document.activeElement)){
+    const opts=[...pop.querySelectorAll('.pop-opt,[data-pop]')]; const i=opts.indexOf(document.activeElement);
+    if(ev.key==='ArrowDown'){ ev.preventDefault(); (opts[i+1]||opts[0]).focus(); return; }
+    if(ev.key==='ArrowUp'){ ev.preventDefault(); (opts[i-1]||opts[opts.length-1]).focus(); return; }
+    if(/^[1-9]$/.test(ev.key)){ const b=pop.querySelector(`.pop-opt[data-i="${+ev.key-1}"]`); if(b){ ev.preventDefault(); choosePop(+ev.key-1); } return; }
+    if(ev.key==='Escape'){ ev.preventDefault(); const mk=pop._mark; closeChoice(); if(mk){ mk.closest('.doc-text').focus({preventScroll:true}); caretAfter(mk); } return; }
+    if(ev.key==='Tab'){ ev.preventDefault(); const mk=pop._mark; closeChoice(); if(mk){ mk.closest('.doc-text').focus({preventScroll:true}); caretAfter(mk); } nextHole(ev.shiftKey?-1:1); return; }
+    return;
+  }
   const mod = ev.metaKey || ev.ctrlKey;
   if(mod && ev.key==='Enter' && state.view==='detail'){ ev.preventDefault(); copyPart(ev.shiftKey?'recs':'body'); return; }
+  const inDoc = ev.target.closest && ev.target.closest('.doc-text');
+  if(inDoc && ev.key==='Tab'){ ev.preventDefault(); nextHole(ev.shiftKey?-1:1); return; }
   if(ev.key==='Escape' && document.activeElement && document.activeElement.id==='q'){ document.activeElement.blur(); return; }
-  if(ev.key==='/' && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)){ ev.preventDefault(); if(state.view!=='list' && !isDesktop()) go('list'); $('#q').focus(); }
+  if(ev.key==='/' && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName) && !document.activeElement.isContentEditable){ ev.preventDefault(); if(state.view!=='list' && !isDesktop()) go('list'); $('#q').focus(); }
 });
+window.addEventListener('resize', positionPop);
+document.addEventListener('scroll', ev=>{ if(!(ev.target.closest && ev.target.closest('#pop'))) positionPop(); }, true);
 
 /* ---------- boot ---------- */
 function paintIcons(){
