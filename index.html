@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="description" content="Plantillario CGAD: plantillas de consulta, urgencias y protocolos quirúrgicos de Cirugía General y del Aparato Digestivo, listas para rellenar y copiar.">
+<meta name="description" content="SurgiDocs: plantillas de consulta, urgencias y protocolos quirúrgicos de Cirugía General y del Aparato Digestivo, listas para rellenar y copiar.">
 <meta name="theme-color" content="#db2777">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.5 system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
-<title>Plantillario CGAD</title>
+<title>SurgiDocs · ByAMS</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
@@ -76,6 +76,8 @@ kbd{font-family:var(--f-mono);font-size:10.5px;line-height:1;padding:3px 5px;bor
 .brand .mark::before,.brand .mark::after{content:"";position:absolute;left:6px;right:6px;height:2.5px;border-radius:2px;background:var(--accent-ink)}
 .brand .mark::before{top:8px}.brand .mark::after{top:13.5px;right:10px}
 .brand b{font-size:19px;font-weight:800;letter-spacing:-.03em}
+.brand-txt{display:flex;flex-direction:column;align-items:flex-start;line-height:1}
+.brand-txt small{font-size:10.5px;font-weight:600;letter-spacing:.04em;color:var(--muted);margin-top:3px}
 .brand-tag{font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 7px}
 .search{flex:1;max-width:560px;margin:0 auto;display:flex;align-items:center;gap:10px;height:40px;padding:0 14px;border-radius:999px;background:var(--sunk);border:1px solid transparent;transition:.15s}
 .search:focus-within{background:var(--surface);border-color:var(--accent-line);box-shadow:0 0 0 3px var(--accent-soft)}
@@ -368,7 +370,7 @@ pre.sample{margin:0;font-family:var(--f-mono);font-size:11.5px;background:var(--
 <body>
 <header class="topbar">
   <div class="bar gutter">
-    <button class="brand" data-action="home" aria-label="Plantillario, inicio"><span class="mark" aria-hidden="true"></span><b>plantillario</b><span class="brand-tag">CGAD</span></button>
+    <button class="brand" data-action="home" aria-label="SurgiDocs, inicio"><span class="mark" aria-hidden="true"></span><span class="brand-txt"><b>SurgiDocs</b><small>ByAMS</small></span></button>
     <label class="search"><span id="searchIco"></span><span class="sr">Buscar plantillas</span>
       <input id="q" type="search" placeholder="Buscar plantilla, etiqueta o texto…" autocomplete="off"><kbd>/</kbd></label>
     <div class="top-actions" id="topActions">
@@ -689,7 +691,7 @@ function fldHTML(raw){
   return `<mark class="fld hole${f.options?' choice':''}" data-k="${esc(k)}" data-label="${esc(l)}" data-t="${t}">${esc(l)}</mark>`;
 }
 /* uppercase section titles («ANESTESIA:», «TÉCNICA:»…) shown in bold; the copied text stays plain */
-const HEADING = /(^|\n)([A-ZÁÉÍÓÚÜÑ][A-ZÁÉÍÓÚÜÑ0-9 \/().,±+-]{1,70}:)/g;
+const HEADING = /(^|\n)([A-ZÁÉÍÓÚÜÑ][A-ZÁÉÍÓÚÜÑ0-9 \/().,±+-]{1,70}:|(?:Motivo de consulta|Enfermedad actual|Exploración física|Exploraciones complementarias|Pruebas complementarias|Tratamiento administrado en urgencias|Tratamiento habitual|Evolución):)/g;
 const txtHTML = t => esc(t).replace(HEADING, (a,pre,h)=>`${pre}<strong class="hd">${h}</strong>`);
 function inlineHTML(src){
   let html='', last=0, m; TOKEN.lastIndex=0;
@@ -1286,7 +1288,7 @@ async function doImport(){
 }
 function exportJSON(){
   const arr=[...state.items.values()].sort((a,b)=>a.title.localeCompare(b.title,'es')).map(({id,uses,...r})=>r);
-  return JSON.stringify({app:'Plantillario CGAD',exportado:nowISO(),plantillas:arr},null,2);
+  return JSON.stringify({app:'SurgiDocs',exportado:nowISO(),plantillas:arr},null,2);
 }
 function copyText(text, okMsg){
   const fallback=()=>{ const ta=document.createElement('textarea'); ta.value=text; ta.setAttribute('readonly',''); ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.select(); let ok=false; try{ ok=document.execCommand('copy'); }catch{} ta.remove(); toast(ok?okMsg:'No se pudo copiar: selecciona el texto y cópialo a mano'); return ok; };
