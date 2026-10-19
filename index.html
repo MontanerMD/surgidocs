@@ -17,7 +17,7 @@
   --ink:#18181b; --ink2:#3f3f46; --muted:#71717a; --faint:#a1a1aa; --line:#e4e4e7; --line2:#d4d4d8;
   --accent:#db2777; --accent-hover:#be185d; --accent-ink:#ffffff; --accent-soft:#fdf2f8; --accent-line:#fbcfe8; --accent-text:#be185d;
   --urg:#ea580c; --qx:#0d9488; --cex:#4f46e5; --com:#8b5cf6; --danger:#dc2626;
-  --fill-line:#f9a8d4;
+  --fill-line:#f9a8d4; --opt-soft:#eef2ff; --opt-line:#c7d2fe; --opt-ink:#4338ca; --date-soft:#ecfdf5; --date-line:#a7f3d0; --date-ink:#047857;
   --shadow:0 1px 2px rgb(24 24 27 / .04), 0 2px 8px -2px rgb(24 24 27 / .06);
   --f:"Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --f-mono:"JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
@@ -28,13 +28,13 @@
   --ink:#fafafa; --ink2:#d4d4d8; --muted:#a1a1aa; --faint:#71717a; --line:#27272a; --line2:#3f3f46;
   --accent:#f472b6; --accent-hover:#f9a8d4; --accent-ink:#1a0610; --accent-soft:#2a1020; --accent-line:#5b2140; --accent-text:#f9a8d4;
   --urg:#fb923c; --qx:#2dd4bf; --cex:#818cf8; --com:#a78bfa; --danger:#f87171;
-  --fill-line:#9d174d; --shadow:0 1px 2px rgb(0 0 0 / .5); color-scheme:dark}}
+  --fill-line:#9d174d; --opt-soft:#1e1b4b; --opt-line:#3730a3; --opt-ink:#c7d2fe; --date-soft:#052e24; --date-line:#065f46; --date-ink:#6ee7b7; --shadow:0 1px 2px rgb(0 0 0 / .5); color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#0b0b0e; --surface:#141418; --sunk:#1c1c21; --hover:#202027;
   --ink:#fafafa; --ink2:#d4d4d8; --muted:#a1a1aa; --faint:#71717a; --line:#27272a; --line2:#3f3f46;
   --accent:#f472b6; --accent-hover:#f9a8d4; --accent-ink:#1a0610; --accent-soft:#2a1020; --accent-line:#5b2140; --accent-text:#f9a8d4;
   --urg:#fb923c; --qx:#2dd4bf; --cex:#818cf8; --com:#a78bfa; --danger:#f87171;
-  --fill-line:#9d174d; --shadow:0 1px 2px rgb(0 0 0 / .5); color-scheme:dark}
+  --fill-line:#9d174d; --opt-soft:#1e1b4b; --opt-line:#3730a3; --opt-ink:#c7d2fe; --date-soft:#052e24; --date-line:#065f46; --date-ink:#6ee7b7; --shadow:0 1px 2px rgb(0 0 0 / .5); color-scheme:dark}
 
 *{box-sizing:border-box}
 html,body{height:100%}
@@ -226,6 +226,61 @@ mark.fld.hole{background:var(--accent-soft);color:var(--accent-text);box-shadow:
 .pop-foot{display:flex;gap:6px;flex-wrap:wrap;border-top:1px solid var(--line);margin-top:6px;padding-top:8px}
 @media (max-width:899px){ .doc-text{padding:18px 18px 22px 44px;font-size:14px} .doc-text .opt-seg.line > .opt-tog{margin-left:-30px;margin-right:12px} .guide .pending{margin-left:0} .doc-page{padding-bottom:110px} }
 
+
+/* visual template editor */
+.ed-top{display:flex;align-items:center;gap:12px}
+.ed-top .sp{flex:1}
+.adv-toggle{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);font-weight:600;cursor:pointer;white-space:nowrap}
+.adv-toggle input{accent-color:var(--accent);width:16px;height:16px}
+.ed-meta{display:grid;grid-template-columns:1fr 1fr;gap:14px 16px}
+.ed-meta .wide{grid-column:1/-1}
+.steps-help{margin:0;padding:14px 18px 14px 36px;background:var(--bg);border:1px solid var(--line);border-radius:12px;font-size:13px;color:var(--ink2);display:flex;flex-direction:column;gap:7px;line-height:1.55}
+.mini{display:inline-block;font-size:11.5px;font-weight:700;border-radius:999px;padding:0 8px;white-space:nowrap}
+.mini.k-text,.mini.k-choice{background:var(--accent-soft);color:var(--accent-text);box-shadow:inset 0 0 0 1px var(--accent-line)}
+.mini.k-opt{background:var(--opt-soft);color:var(--opt-ink);box-shadow:inset 0 0 0 1px var(--opt-line)}
+.ed-block{border:1px solid var(--line);border-radius:14px;background:var(--surface)}
+.ed-block:focus-within{border-color:var(--accent-line);box-shadow:0 0 0 3px var(--accent-soft)}
+.ed-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;padding:14px 16px 4px}
+.ed-tools{position:sticky;top:0;z-index:3;display:flex;flex-wrap:wrap;gap:6px;padding:10px 12px;border-bottom:1px solid var(--line);background:var(--surface);border-radius:14px 14px 0 0}
+.tool{display:inline-flex;align-items:center;gap:7px;height:32px;padding:0 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);font-size:12.5px;font-weight:600;color:var(--ink2)}
+.tool:hover{border-color:var(--accent);color:var(--accent-text);background:var(--accent-soft)}
+.tool[aria-pressed="true"]{border-color:var(--opt-line);background:var(--opt-soft);color:var(--opt-ink)}
+.sw{width:11px;height:11px;border-radius:3px;flex:none}
+.sw.k-text{background:var(--accent-soft);box-shadow:inset 0 0 0 1.5px var(--accent)}
+.sw.k-choice{background:var(--accent)}
+.sw.k-date{background:var(--date-soft);box-shadow:inset 0 0 0 1.5px var(--date-ink)}
+.sw.k-opt{background:var(--opt-soft);box-shadow:inset 0 0 0 1.5px var(--opt-ink)}
+.ed-text{min-height:220px;padding:18px 22px 26px;white-space:pre-wrap;overflow-wrap:anywhere;font-size:14px;line-height:1.85;outline:none;color:var(--ink2);caret-color:var(--accent)}
+.ed-text:empty::before{content:attr(data-ph);color:var(--faint)}
+.ed-block[data-part="recs"] .ed-text{min-height:120px}
+.chip-f{display:inline;padding:2px 8px;border-radius:7px;background:var(--accent-soft);color:var(--accent-text);box-shadow:inset 0 0 0 1px var(--accent-line);font-size:.9em;cursor:pointer;user-select:none;-webkit-user-select:none;white-space:nowrap;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+.chip-f:hover{box-shadow:inset 0 0 0 1.5px var(--accent)}
+.chip-f b{font-weight:700}
+.chip-f i{font-style:normal;font-size:.85em;opacity:.7;margin-left:6px}
+.chip-f.k-choice::after,.chip-f.k-multi::after{content:"▾";margin-left:4px;font-size:.85em;opacity:.7}
+.chip-f.k-choice,.chip-f.k-multi{background:var(--accent);color:var(--accent-ink);box-shadow:none}
+.chip-f.k-choice i,.chip-f.k-multi i{opacity:.85}
+.chip-f.k-date{background:var(--date-soft);color:var(--date-ink);box-shadow:inset 0 0 0 1px var(--date-line)}
+.ed-opt{background:var(--opt-soft);box-shadow:inset 0 -2px 0 var(--opt-line);border-radius:3px;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+.ed-opt::before{content:"opcional";display:inline-block;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--opt-ink);background:var(--surface);box-shadow:inset 0 0 0 1px var(--opt-line);border-radius:999px;padding:0 6px;margin-right:6px;line-height:16px;vertical-align:1px;user-select:none}
+textarea.code{min-height:36vh;border:0;border-radius:0 0 14px 14px;font-family:var(--f-mono);font-size:12.5px;line-height:1.7;padding:16px 18px}
+textarea.code:focus{box-shadow:none}
+.modal{position:fixed;inset:0;z-index:70;background:rgb(24 24 27 / .38);display:grid;place-items:center;padding:16px max(16px,env(safe-area-inset-right,0px)) 16px max(16px,env(safe-area-inset-left,0px))}
+.modal-card{width:min(500px,100%);max-height:calc(100dvh - 32px);overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:0 24px 60px -12px rgb(24 24 27 / .35);padding:22px;display:flex;flex-direction:column;gap:18px}
+.modal-head{display:flex;flex-direction:column;gap:2px}
+.modal-head h2{font-size:18px}
+.opt-rows{display:flex;flex-direction:column;gap:6px}
+.opt-row{display:flex;gap:8px;align-items:center}
+.opt-row .n{width:20px;text-align:right;font-size:12px;color:var(--faint);font-variant-numeric:tabular-nums;flex:none}
+.opt-row .inp{flex:1;min-width:0}
+.icon-btn{width:34px;padding:0;flex:none}
+.modal-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.modal-bar .sp{flex:1}
+#dlg-err:empty{display:none}
+.modal .seg{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media (max-width:460px){.modal .seg{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:899px){ .ed-meta{grid-template-columns:1fr} .ed-text{padding:14px 16px 20px} .tool{height:34px} }
+
 /* pages: editor, import, welcome */
 .page{height:100%;overflow:auto}
 .page-in{max-width:880px;margin:0 auto;padding:32px max(32px,env(safe-area-inset-right,0px)) 64px max(32px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:20px}
@@ -341,6 +396,7 @@ pre.sample{margin:0;font-family:var(--f-mono);font-size:11.5px;background:var(--
 
 <div class="copybar" id="copybar"></div>
 <div class="pop" id="pop" hidden role="dialog" aria-label="Elegir opción"></div>
+<div class="modal" id="modal" hidden></div>
 <nav class="bottomnav" aria-label="Navegación">
   <div class="in">
     <button data-action="home" aria-current="true" id="navList"><span id="navListIco"></span>Plantillas</button>
@@ -795,38 +851,109 @@ function serializeDoc(el){
 function updatePreview(){ refreshDoc(); }
 function highlight(){}
 
-/* ---------- editor ---------- */
+/* ---------- editor ----------
+   Visual editor: the template is shown as it will read. Fields are chips,
+   optional steps are tinted spans. Nobody has to type {{ }} or [[ ]]. */
+const ED = { range:null, host:null, adv:false, dlg:null };
+let lastEd='ed-body';
+function insertAtCursor(){ /* kept for older toolbar actions */ }
+
+function chipKind(label, opts, multi){
+  if(opts && opts.length) return multi ? 'multi' : 'choice';
+  const n=norm(label); return (n==='fecha' || n.startsWith('fecha ')) ? 'date' : 'text';
+}
+function chipHTML(label, opts, multi){
+  label=String(label||'').trim() || 'Campo';
+  const kind=chipKind(label, opts, multi);
+  const sub = kind==='choice' ? `${opts.length} opciones` : kind==='multi' ? `varias · ${opts.length}` : kind==='date' ? 'fecha' : '';
+  return `<span class="chip-f k-${kind}" contenteditable="false" data-label="${esc(label)}" data-kind="${kind}" data-opts="${esc(JSON.stringify(opts||[]))}" title="Pulsa para editar este campo"><b>${esc(label)}</b>${sub?`<i>${sub}</i>`:''}</span>`;
+}
+function edInline(src){
+  let html='', last=0, m; TOKEN.lastIndex=0;
+  while((m=TOKEN.exec(src))){
+    html+=esc(src.slice(last,m.index));
+    let label=m[1].trim(), multi=false; if(label.endsWith('*')){ multi=true; label=label.slice(0,-1).trim(); }
+    const opts=m[2]?m[2].split('|').map(s=>s.trim()).filter(Boolean):null;
+    html+=chipHTML(label, opts&&opts.length?opts:null, multi);
+    last=TOKEN.lastIndex;
+  }
+  return html+esc(src.slice(last));
+}
+function edHTML(src){
+  src=String(src||'');
+  let html='', last=0, m; OPT.lastIndex=0;
+  while((m=OPT.exec(src))){
+    html+=edInline(src.slice(last,m.index));
+    html+=`<span class="ed-opt">${edInline(m[1])}</span>`;
+    last=m.index+m[0].length; OPT.lastIndex=last;
+  }
+  return html+edInline(src.slice(last));
+}
+function chipSrc(c){
+  let label=(c.dataset.label||'Campo').replace(/[{}:|*\[\]]/g,'').trim()||'Campo';
+  const kind=c.dataset.kind; let opts=[]; try{ opts=JSON.parse(c.dataset.opts||'[]'); }catch{}
+  opts=opts.map(o=>String(o).replace(/[{}|\[\]]/g,'').trim()).filter(Boolean);
+  if(kind==='date'){ if(!norm(label).startsWith('fecha')) label='Fecha '+label.charAt(0).toLowerCase()+label.slice(1); return `{{${label}}}`; }
+  if((kind==='choice'||kind==='multi') && opts.length) return `{{${label}${kind==='multi'?'*':''}: ${opts.join(' | ')}}}`;
+  return `{{${label}}}`;
+}
+function serializeEd(el){
+  if(!el) return '';
+  let out='';
+  (function walk(n){
+    if(n.nodeType===3){ out+=n.nodeValue; return; }
+    if(n.nodeType!==1) return;
+    if(n.classList.contains('chip-f')){ out+=chipSrc(n); return; }
+    if(n.tagName==='BR'){ out+='\n'; return; }
+    if(n.classList.contains('ed-opt')){ out+='[['; n.childNodes.forEach(walk); out+=']]'; return; }
+    const block = n!==el && /^(DIV|P)$/.test(n.tagName);
+    if(block && out && !out.endsWith('\n')) out+='\n';
+    n.childNodes.forEach(walk);
+  })(el);
+  return out.replace(/​/g,'').replace(/ /g,' ').replace(/\[\[\s*\]\]/g,'').replace(/\s+$/,'');
+}
+function edSource(part){
+  if(ED.adv){ const t=$('#ed-'+part+'-code'); return t ? t.value.replace(/\s+$/,'') : ''; }
+  return serializeEd($('#ed-'+part));
+}
+function edBlock(part, title, src, hint){
+  return `<section class="ed-block" data-part="${part}">
+    <div class="ed-head"><h2>${title}</h2>${hint?`<span class="hint">${hint}</span>`:''}</div>
+    <div class="ed-tools" role="toolbar" aria-label="Herramientas: ${title}">
+      <button type="button" class="tool" data-tool="text" data-part="${part}" title="Un hueco para escribir (lo que en papel sería una X)"><span class="sw k-text"></span>Hueco para escribir</button>
+      <button type="button" class="tool" data-tool="choice" data-part="${part}" title="Elegir entre varias opciones (lo que en papel sería «a / b»)"><span class="sw k-choice"></span>Opciones a elegir</button>
+      <button type="button" class="tool" data-tool="date" data-part="${part}" title="Una fecha"><span class="sw k-date"></span>Fecha</button>
+      <button type="button" class="tool" data-tool="opt" data-part="${part}" title="Un paso que solo se copia si lo incluyes"><span class="sw k-opt"></span><span class="lbl-opt">Paso opcional</span></button>
+    </div>
+    <div class="ed-text" id="ed-${part}" data-part="${part}" spellcheck="true" role="textbox" aria-multiline="true" aria-label="${title}" data-ph="${part==='body'?'Escribe o pega aquí el texto de la plantilla, tal como quieres que se copie.':'Opcional. Escribe o pega las recomendaciones para el paciente.'}">${edHTML(src)}</div>
+    <textarea class="inp body code" id="ed-${part}-code" spellcheck="false" hidden></textarea>
+  </section>`;
+}
 function renderEditor(o){
   const isNew=!o; const d=o||{title:'',type:state.type in TYPES?state.type:'quirurgica',section:state.section!=='all'?state.section:'CCP',tags:[],body:'',recs:''};
+  ED.range=null; ED.host=null; ED.adv=false;
   setMain(`
     <button class="back" data-action="${isNew?'home':'open-current'}">${ico('back')}${isNew?'Plantillas':'Volver a la plantilla'}</button>
-    <h1>${isNew?'Nueva plantilla':'Editar plantilla'}</h1>
+    <div class="ed-top"><h1>${isNew?'Nueva plantilla':'Editar plantilla'}</h1><span class="sp"></span>
+      <label class="adv-toggle" title="Para usuarios avanzados: muestra el texto con sus marcas {{ }} y [[ ]]"><input type="checkbox" id="ed-adv"> Ver código</label></div>
     <form class="form" id="edForm" autocomplete="off">
-      <div class="f"><label for="ed-title">Título</label><input class="inp" id="ed-title" value="${esc(d.title)}" placeholder="Ej.: Sigmoidectomía laparoscópica" required></div>
-      <div class="f"><span class="lbl">Tipo</span><div class="seg" role="radiogroup" aria-label="Tipo">
-        ${Object.entries(TYPES).map(([k,t])=>`<input type="radio" name="ed-type" id="ed-type-${k}" value="${k}" ${d.type===k?'checked':''}><label for="ed-type-${k}">${t.label}</label>`).join('')}
-      </div></div>
-      <div class="row2">
+      <div class="ed-meta">
+        <div class="f wide"><label for="ed-title">Nombre de la plantilla</label><input class="inp" id="ed-title" value="${esc(d.title)}" placeholder="Ej.: Sigmoidectomía laparoscópica" required></div>
+        <div class="f wide"><span class="lbl">Tipo</span><div class="seg" role="radiogroup" aria-label="Tipo">
+          ${Object.entries(TYPES).map(([k,t])=>`<input type="radio" name="ed-type" id="ed-type-${k}" value="${k}" ${d.type===k?'checked':''}><label for="ed-type-${k}">${t.label}</label>`).join('')}
+        </div></div>
         <div class="f"><label for="ed-section">Sección</label><select class="inp" id="ed-section">${SECTIONS.map(s=>`<option value="${s}" ${d.section===s?'selected':''}>${s} — ${esc(SEC_NAMES[s])}</option>`).join('')}</select></div>
-        <div class="f"><label for="ed-tags">Etiquetas (separadas por comas)</label><input class="inp" id="ed-tags" value="${esc((d.tags||[]).join(', '))}" placeholder="laparoscopia, colon"></div>
+        <div class="f"><label for="ed-tags">Etiquetas <span class="multi">· opcional, para encontrarla al buscar</span></label><input class="inp" id="ed-tags" value="${esc((d.tags||[]).join(', '))}" placeholder="colon, laparoscopia"></div>
       </div>
-      <div class="f">
-        <label for="ed-body">Texto de la plantilla</label>
-        <div class="toolbar">
-          <button type="button" class="btn" data-action="ins" data-v="{{Campo}}" data-sel="Campo">+ Campo de texto</button>
-          <button type="button" class="btn" data-action="ins" data-v="{{Opción: A | B | C}}" data-sel="Opción">+ Opciones</button>
-          <button type="button" class="btn" data-action="ins" data-v="{{Hallazgos*: A | B | C}}" data-sel="Hallazgos">+ Selección múltiple</button>
-          <button type="button" class="btn" data-action="ins" data-v="{{Fecha}}">+ Fecha</button>
-          <button type="button" class="btn" data-action="ins" data-v="[[- Paso opcional]]" data-sel="Paso opcional">+ Paso opcional</button>
-        </div>
-        <textarea class="inp body" id="ed-body" data-ed spellcheck="true" placeholder="Escribe o pega el texto. Marca con {{ }} lo que cambia en cada paciente.">${esc(d.body)}</textarea>
-      </div>
-      <div class="f">
-        <label for="ed-recs">Recomendaciones al alta <span class="multi">(opcional · se muestran y copian en un cuadro aparte)</span></label>
-        <textarea class="inp body recs-ta" id="ed-recs" data-ed spellcheck="true" placeholder="CUIDADOS DE LA HERIDA:&#10;- …&#10;&#10;SI APARECEN COMPLICACIONES, ACUDA A URGENCIAS.">${esc(d.recs||'')}</textarea>
-        <p class="hint">Los botones de arriba insertan en el cuadro que estés editando. Si pegas un texto con una línea «Recomendaciones al alta:», al guardar se separa solo.</p>
-      </div>
-      ${syntaxHelp()}
+      <ol class="steps-help">
+        <li><b>Escribe o pega el texto</b> tal como quieres que salga en el informe.</li>
+        <li><b>Selecciona con el ratón</b> lo que cambia en cada paciente y pulsa <span class="mini k-text">Hueco para escribir</span> o <span class="mini k-choice">Opciones a elegir</span>. Si seleccionas «flemonoso / gangrenoso», las opciones se crean solas.</li>
+        <li><b>Selecciona un paso</b> que no siempre haces (o pon el cursor en su línea) y pulsa <span class="mini k-opt">Paso opcional</span>.</li>
+        <li>Pulsa cualquier campo rosa para cambiarlo o quitarlo. Los títulos en mayúsculas («TÉCNICA:») se verán en negrita.</li>
+      </ol>
+      ${edBlock('body', 'Texto del informe', d.body)}
+      ${edBlock('recs', 'Recomendaciones al alta', d.recs, 'Opcional · se muestran y copian en un cuadro aparte')}
+      <div id="edSyntax" hidden>${syntaxHelp()}</div>
       <div class="detected" id="detected"></div>
       <div class="edbar">
         ${!isNew?`<button type="button" class="btn danger" data-action="del">${ico('trash')}Borrar</button>`:''}
@@ -835,41 +962,212 @@ function renderEditor(o){
         <button type="submit" class="btn primary">${ico('check')}Guardar</button>
       </div>
     </form>`);
-  lastEd='ed-body';
+  document.querySelectorAll('.ed-text').forEach(makeEditable);
   updateDetected();
   if(isNew) $('#ed-title').focus();
 }
-function updateDetected(){
-  const t=$('#ed-body'); const r=$('#ed-recs'); const box=$('#detected'); if(!t||!box) return;
-  const both=t.value+'\n'+(r?r.value:'');
-  const f=parseFields(both), op=[...parseOptionals(t.value),...parseOptionals(r?r.value:'')];
-  box.innerHTML = (f.length ? `Campos: ${f.map(x=>`<span class="tag">${esc(x.label)}${x.options?` · ${x.options.length}`:''}</span>`).join('')}` : 'Sin campos rellenables todavía.') + (op.length?` <span class="tag plain">${op.length} paso${op.length===1?'':'s'} opcional${op.length===1?'':'es'}</span>`:'');
+function toggleAdv(on){
+  ['body','recs'].forEach(part=>{
+    const div=$('#ed-'+part), ta=$('#ed-'+part+'-code'); if(!div||!ta) return;
+    if(on){ ta.value=serializeEd(div); }
+    else { div.innerHTML=edHTML(ta.value); }
+    div.hidden=on; ta.hidden=!on;
+    const tools=div.parentElement.querySelector('.ed-tools'); if(tools) tools.hidden=on;
+  });
+  ED.adv=on; $('#edSyntax').hidden=!on; document.querySelector('.steps-help').hidden=on;
+  updateDetected();
 }
+function updateDetected(){
+  const box=$('#detected'); if(!box) return;
+  const body=edSource('body'), recs=edSource('recs'), src=body+'\n'+recs;
+  const f=parseFields(src), op=[...parseOptionals(body),...parseOptionals(recs)];
+  const nt=f.filter(x=>!x.options&&!x.isDate).length, nc=f.filter(x=>x.options).length, nd=f.filter(x=>x.isDate).length;
+  const parts=[];
+  if(nt) parts.push(`<span class="tag">${nt} hueco${nt===1?'':'s'} para escribir</span>`);
+  if(nc) parts.push(`<span class="tag">${nc} campo${nc===1?'':'s'} con opciones</span>`);
+  if(nd) parts.push(`<span class="tag">${nd} fecha${nd===1?'':'s'}</span>`);
+  if(op.length) parts.push(`<span class="tag plain">${op.length} paso${op.length===1?'':'s'} opcional${op.length===1?'':'es'}</span>`);
+  box.innerHTML = parts.length ? `Esta plantilla tiene: ${parts.join('')}` : 'Aún no hay campos. Selecciona texto y usa los botones de cada cuadro.';
+  document.querySelectorAll('.ed-tools [data-tool="opt"]').forEach(b=>{
+    const host=$('#ed-'+b.dataset.part); const inOpt=ED.range && ED.host===host && rangeInOpt(ED.range);
+    b.setAttribute('aria-pressed', !!inOpt); b.querySelector('.lbl-opt').textContent = inOpt ? 'Quitar opcional' : 'Paso opcional';
+  });
+}
+function rangeInOpt(r){ const n=r.startContainer; const el=n.nodeType===1?n:n.parentElement; return el && el.closest('.ed-opt'); }
+function unwrap(el){ const p=el.parentNode; while(el.firstChild) p.insertBefore(el.firstChild, el); el.remove(); }
+function edRange(host){
+  if(ED.range && ED.host===host && host.contains(ED.range.commonAncestorContainer)) return ED.range.cloneRange();
+  const r=document.createRange(); r.selectNodeContents(host); r.collapse(false); return r;
+}
+function placeCaret(node, after=true){
+  const sel=getSelection(), r=document.createRange();
+  after ? r.setStartAfter(node) : r.setStartBefore(node); r.collapse(true); sel.removeAllRanges(); sel.addRange(r);
+  ED.range=r.cloneRange();
+}
+function edTool(tool, part){
+  const host=$('#ed-'+part); if(!host) return;
+  const r=edRange(host);
+  if(tool==='opt'){ toggleOptional(host, r); return; }
+  const sel=r.toString().replace(/\s+/g,' ').trim();
+  let label='', opts=[];
+  if(tool==='date') label='Fecha';
+  else if(tool==='choice'){
+    if(/\s\/\s|\s\/|\/\s/.test(sel)) opts=sel.split(/\s*\/\s*/).map(s=>s.trim()).filter(Boolean);
+    else if(sel) opts=[sel];
+  } else if(sel && sel!=='X' && sel.length<=40) label=sel.charAt(0).toUpperCase()+sel.slice(1);
+  openFieldDialog({kind:tool, label, opts, range:r, host, chip:null, hadSel:!!sel});
+}
+function toggleOptional(host, r){
+  const inOpt=rangeInOpt(r);
+  if(inOpt && host.contains(inOpt)){ unwrap(inOpt); host.normalize(); ED.range=null; saveEdChange('Paso convertido en fijo'); return; }
+  let rr=r.cloneRange();
+  if(rr.collapsed){
+    const sel=getSelection(); sel.removeAllRanges(); sel.addRange(rr);
+    try{ sel.modify('move','backward','paragraphboundary'); sel.modify('extend','forward','paragraphboundary'); }catch{}
+    rr = sel.rangeCount ? sel.getRangeAt(0).cloneRange() : rr;
+    if(rr.collapsed || !host.contains(rr.commonAncestorContainer)){ toast('Selecciona primero el texto del paso opcional'); return; }
+  }
+  /* a selection that ends right after a line keeps the line break outside */
+  const frag=rr.extractContents();
+  const span=document.createElement('span'); span.className='ed-opt'; span.appendChild(frag);
+  span.querySelectorAll('.ed-opt').forEach(unwrap);
+  if(!span.textContent.trim() && !span.querySelector('.chip-f')){ rr.insertNode(frag); return; }
+  rr.insertNode(span); placeCaret(span);
+  saveEdChange('Marcado como paso opcional');
+}
+function saveEdChange(msg){ updateDetected(); if(msg) toast(msg); }
+
+/* ---------- field dialog ---------- */
+function optRow(v=''){ return `<div class="opt-row"><span class="n"></span><input class="inp" value="${esc(v)}" placeholder="Escribe una opción"><button type="button" class="btn sm ghost icon-btn" data-dlg="rm" title="Quitar esta opción" aria-label="Quitar esta opción">${ico('trash')}</button></div>`; }
+function numberRows(){ document.querySelectorAll('#dlg-opts .opt-row .n').forEach((n,i)=>n.textContent=(i+1)+'.'); }
+function openFieldDialog(cfg){
+  ED.dlg=cfg;
+  const kinds=[['text','Escribir'],['choice','Elegir una'],['multi','Elegir varias'],['date','Fecha']];
+  let opts=cfg.opts&&cfg.opts.length?[...cfg.opts]:[]; while(opts.length<2) opts.push('');
+  const m=$('#modal');
+  m.innerHTML=`<div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="dlgT">
+    <div class="modal-head"><h2 id="dlgT">${cfg.chip?'Editar campo':'Nuevo campo'}</h2>${cfg.hadSel&&!cfg.chip?`<span class="hint">Sustituirá al texto que habías seleccionado</span>`:''}</div>
+    <div class="f"><span class="lbl">¿Cómo se rellena?</span><div class="seg" role="radiogroup" aria-label="Cómo se rellena">
+      ${kinds.map(([k,l])=>`<input type="radio" name="dlg-kind" id="dlg-k-${k}" value="${k}" ${cfg.kind===k?'checked':''}><label for="dlg-k-${k}">${l}</label>`).join('')}
+    </div></div>
+    <div class="f"><label for="dlg-label">Nombre del campo</label><input class="inp" id="dlg-label" value="${esc(cfg.label||'')}" placeholder="Ej.: Apéndice, Lado, Pérdida hemática (cc)">
+      <p class="hint">Es lo que verás en rosa hasta rellenarlo. Si usas el mismo nombre en otro sitio de la plantilla, se rellenan a la vez.</p></div>
+    <div class="f" id="dlg-opts-wrap"><span class="lbl">Opciones</span>
+      <div class="opt-rows" id="dlg-opts">${opts.map(optRow).join('')}</div>
+      <div><button type="button" class="btn sm" data-dlg="add">${ico('plus')}Añadir opción</button></div>
+      <p class="hint">Pulsa Intro para añadir otra. Escribe «…» dentro de una opción para dejar un hueco que se completa al elegirla, por ejemplo «Fiebre de … ºC».</p></div>
+    <p class="err" id="dlg-err"></p>
+    <div class="modal-bar">${cfg.chip?`<button type="button" class="btn danger" data-dlg="del">${ico('trash')}Quitar campo</button>`:''}<span class="sp"></span>
+      <button type="button" class="btn ghost" data-dlg="cancel">Cancelar</button><button type="button" class="btn primary" data-dlg="ok">${ico('check')}${cfg.chip?'Guardar':'Insertar'}</button></div>
+  </div>`;
+  m.hidden=false; numberRows(); dlgKindChanged(true);
+  const focusEl = (cfg.kind==='choice'||cfg.kind==='multi') && !cfg.label && opts[0] ? $('#dlg-label') : (cfg.kind==='choice'||cfg.kind==='multi') && !opts[0] ? $('#dlg-opts input') : $('#dlg-label');
+  setTimeout(()=>{ focusEl.focus(); focusEl.select && focusEl.select(); },0);
+}
+function dlgKind(){ return document.querySelector('input[name="dlg-kind"]:checked')?.value || 'text'; }
+function dlgKindChanged(first){
+  const k=dlgKind(); $('#dlg-opts-wrap').hidden = !(k==='choice'||k==='multi');
+  const lab=$('#dlg-label');
+  if(k==='date' && !first && !lab.value.trim()) lab.value='Fecha';
+}
+function closeDialog(restore=true){
+  const m=$('#modal'); m.hidden=true; m.innerHTML='';
+  const cfg=ED.dlg; ED.dlg=null;
+  if(restore && cfg && cfg.host){ cfg.host.focus({preventScroll:true}); if(cfg.range){ const s=getSelection(); s.removeAllRanges(); s.addRange(cfg.range); } }
+}
+function dlgOk(){
+  const cfg=ED.dlg; if(!cfg) return;
+  const k=dlgKind(); let label=$('#dlg-label').value.replace(/[{}:|*\[\]]/g,' ').replace(/\s+/g,' ').trim();
+  const err=$('#dlg-err');
+  let opts=[...document.querySelectorAll('#dlg-opts input')].map(i=>i.value.replace(/[{}|\[\]]/g,' ').replace(/\s+/g,' ').trim()).filter(Boolean);
+  if(k==='date' && !label) label='Fecha';
+  if(!label){ err.textContent='Ponle un nombre al campo.'; $('#dlg-label').focus(); return; }
+  if((k==='choice'||k==='multi') && opts.length<2){ err.textContent='Escribe al menos dos opciones.'; (document.querySelector('#dlg-opts input:placeholder-shown')||$('#dlg-opts input')).focus(); return; }
+  if(k==='date' && !norm(label).startsWith('fecha')) label='Fecha '+label.charAt(0).toLowerCase()+label.slice(1);
+  const tpl=document.createElement('template');
+  tpl.innerHTML=chipHTML(label, (k==='choice'||k==='multi')?opts:null, k==='multi');
+  const chip=tpl.content.firstChild;
+  if(cfg.chip){ cfg.chip.replaceWith(chip); }
+  else { const r=cfg.range; r.deleteContents(); r.insertNode(chip); }
+  closeDialog(false);
+  cfg.host.focus({preventScroll:true}); placeCaret(chip);
+  saveEdChange(cfg.chip?'Campo actualizado':'Campo añadido');
+}
+function dlgDelete(){
+  const cfg=ED.dlg; if(!cfg||!cfg.chip) return;
+  const host=cfg.host, chip=cfg.chip; const prev=chip.previousSibling;
+  chip.remove(); closeDialog(false); host.focus({preventScroll:true});
+  if(prev) placeCaret(prev);
+  saveEdChange('Campo quitado');
+}
+document.addEventListener('mousedown', ev=>{ if(ev.target.closest && ev.target.closest('.ed-tools .tool')) ev.preventDefault(); });
+document.addEventListener('selectionchange', ()=>{
+  const sel=getSelection(); if(!sel.rangeCount) return; const r=sel.getRangeAt(0);
+  const c=r.commonAncestorContainer; const el=c.nodeType===1?c:c.parentElement;
+  const host=el && el.closest('.ed-text');
+  if(host){ ED.range=r.cloneRange(); ED.host=host; if(state.view==='edit') updateDetected(); }
+});
+document.addEventListener('click', ev=>{
+  const t=ev.target;
+  const tool=t.closest && t.closest('.ed-tools .tool');
+  if(tool){ edTool(tool.dataset.tool, tool.dataset.part); return; }
+  const chip=t.closest && t.closest('.ed-text .chip-f');
+  if(chip){
+    let opts=[]; try{ opts=JSON.parse(chip.dataset.opts||'[]'); }catch{}
+    openFieldDialog({kind:chip.dataset.kind, label:chip.dataset.label, opts, chip, host:chip.closest('.ed-text'), range:null});
+    return;
+  }
+  const d=t.closest && t.closest('#modal [data-dlg]');
+  if(d){
+    const a=d.dataset.dlg;
+    if(a==='ok') dlgOk();
+    else if(a==='cancel') closeDialog();
+    else if(a==='del') dlgDelete();
+    else if(a==='add'){ $('#dlg-opts').insertAdjacentHTML('beforeend', optRow()); numberRows(); [...document.querySelectorAll('#dlg-opts input')].pop().focus(); }
+    else if(a==='rm'){ const row=d.closest('.opt-row'); const rows=document.querySelectorAll('#dlg-opts .opt-row'); if(rows.length>1){ row.remove(); numberRows(); } else row.querySelector('input').value=''; }
+    return;
+  }
+  if(t.id==='modal'){ closeDialog(); }
+});
+document.addEventListener('change', ev=>{
+  if(ev.target.name==='dlg-kind') dlgKindChanged(false);
+  if(ev.target.id==='ed-adv') toggleAdv(ev.target.checked);
+});
+document.addEventListener('keydown', ev=>{
+  const m=$('#modal'); if(!m || m.hidden) return;
+  if(ev.key==='Escape'){ ev.preventDefault(); closeDialog(); return; }
+  const inOpt=ev.target.closest && ev.target.closest('#dlg-opts .opt-row');
+  if(ev.key==='Enter' && (ev.metaKey||ev.ctrlKey)){ ev.preventDefault(); dlgOk(); return; }
+  if(ev.key==='Enter' && inOpt){ ev.preventDefault(); if(!ev.target.value.trim()){ dlgOk(); return; } inOpt.insertAdjacentHTML('afterend', optRow()); numberRows(); inOpt.nextElementSibling.querySelector('input').focus(); return; }
+  if(ev.key==='Backspace' && inOpt && !ev.target.value){ const prev=inOpt.previousElementSibling; if(prev){ ev.preventDefault(); inOpt.remove(); numberRows(); const i=prev.querySelector('input'); i.focus(); i.setSelectionRange(i.value.length,i.value.length); } return; }
+  if(ev.key==='Enter' && ev.target.id==='dlg-label'){ ev.preventDefault(); const k=dlgKind(); if(k==='choice'||k==='multi'){ const empty=[...document.querySelectorAll('#dlg-opts input')].find(i=>!i.value.trim()); if(empty){ empty.focus(); return; } } dlgOk(); return; }
+}, true);
+document.addEventListener('paste', ev=>{
+  const host=ev.target.closest && ev.target.closest('.ed-text'); if(!host) return;
+  ev.preventDefault();
+  const text=(ev.clipboardData||window.clipboardData).getData('text/plain').replace(/\r/g,'');
+  const sel=getSelection(); if(!sel.rangeCount) return; const r=sel.getRangeAt(0); r.deleteContents();
+  const tpl=document.createElement('template'); tpl.innerHTML=edHTML(text);
+  const last=tpl.content.lastChild; r.insertNode(tpl.content);
+  if(last) placeCaret(last);
+  updateDetected();
+});
 async function submitEditor(e){
   e.preventDefault();
   const title=$('#ed-title').value.trim();
-  let body=$('#ed-body').value, recs=($('#ed-recs')?.value||'').replace(/\s+$/,'');
+  let body=edSource('body'), recs=edSource('recs');
   const sp=splitRecs(body); if(sp.recs){ body=sp.body; recs=recs?sp.recs+'\n\n'+recs:sp.recs; }
   const err=$('#edErr');
-  if(!title){ err.textContent='Falta el título.'; $('#ed-title').focus(); return; }
-  if(!body.trim()){ err.textContent='La plantilla está vacía.'; $('#ed-body').focus(); return; }
+  if(!title){ err.textContent='Falta el nombre de la plantilla.'; $('#ed-title').focus(); return; }
+  if(!body.trim()){ err.textContent='El texto del informe está vacío.'; (ED.adv?$('#ed-body-code'):$('#ed-body')).focus(); return; }
   const type=document.querySelector('input[name="ed-type"]:checked')?.value||'quirurgica';
   const section=$('#ed-section').value;
   const tags=$('#ed-tags').value.split(',').map(s=>s.trim()).filter(Boolean);
   const prev=state.currentId?state.items.get(state.currentId):null;
   const o={ id:prev?prev.id:newId(), title, type, section, tags, body, recs, fav:prev?!!prev.fav:false, uses:prev?prev.uses||0:0, createdAt:prev?prev.createdAt||nowISO():nowISO(), updatedAt:nowISO() };
   const btn=e.submitter; if(btn) btn.disabled=true;
-  try{ await saveItem(o); toast(prev?'Cambios guardados':'Plantilla creada'); go('detail',o.id); }
+  try{ await saveItem(o); delete state.docs[o.id]; toast(prev?'Cambios guardados':'Plantilla creada'); go('detail',o.id); }
   catch(x){ err.textContent=dbErr(x); if(btn) btn.disabled=false; }
-}
-let lastEd='ed-body';
-function insertAtCursor(text, selWord){
-  const t=$('#'+lastEd)||$('#ed-body'); if(!t) return;
-  const s=t.selectionStart??t.value.length, e=t.selectionEnd??s;
-  t.value=t.value.slice(0,s)+text+t.value.slice(e);
-  t.focus();
-  if(selWord){ const i=text.indexOf(selWord); t.setSelectionRange(s+i,s+i+selWord.length); } else { t.setSelectionRange(s+text.length,s+text.length); }
-  updateDetected();
 }
 
 /* ---------- import / export ---------- */
@@ -1067,7 +1365,7 @@ document.addEventListener('input', ev=>{
     saveDocs(); return;
   }
   if(t.id==='q'){ state.q=t.value; renderList(); return; }
-  if(t.id==='ed-body'||t.id==='ed-recs'){ updateDetected(); $('#edErr').textContent=''; return; }
+  if(t.id==='ed-body'||t.id==='ed-recs'||(t.classList&&t.classList.contains('code'))){ updateDetected(); $('#edErr').textContent=''; return; }
   if(t.id==='ed-title'){ $('#edErr').textContent=''; return; }
   if(t.id==='imp-text') updateImportPreview();
 });

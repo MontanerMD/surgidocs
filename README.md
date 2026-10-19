@@ -14,7 +14,7 @@ Las plantillas están a la izquierda y, a la derecha, solo el texto que se copia
 - **Texto libre:** todo el texto se puede escribir y borrar con el teclado. **Reiniciar plantilla** la devuelve a su estado original.
 - **Dos cuadros separados:** el informe (técnica quirúrgica o valoración) y las **recomendaciones al alta**, cada uno con su botón de copiar.
 - **Atajos de teclado:** `/` busca, `Tab` va al siguiente hueco, `Ctrl/⌘ + Intro` copia el informe y `Ctrl/⌘ + Mayús + Intro` copia las recomendaciones.
-- **Edición:** editor para crear, duplicar y modificar plantillas.
+- **Editor visual:** se escribe o pega el texto tal como saldrá; se selecciona lo que cambia y se pulsa «Hueco para escribir», «Opciones a elegir», «Fecha» o «Paso opcional». Los campos se editan pulsándolos. Sin sintaxis que aprender (hay un modo «Ver código» para usuarios avanzados).
 - **Importar y exportar:** importación desde texto o JSON y exportación de una copia de seguridad.
 
 ## Sintaxis de las plantillas
