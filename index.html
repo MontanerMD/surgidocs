@@ -213,6 +213,8 @@ mark.fld.hole{background:var(--accent-soft);color:var(--accent-text);box-shadow:
 .opt-tog{display:inline-grid;place-items:center;width:18px;height:18px;margin-right:6px;border-radius:6px;border:1.5px solid var(--accent);color:var(--accent-text);background:var(--surface);font-size:13px;font-weight:800;line-height:1;vertical-align:-3px;cursor:pointer;user-select:none;-webkit-user-select:none}
 .opt-tog::before{content:"+"}
 .doc-text .opt-seg:not(.off) > .opt-tog{background:var(--accent);color:var(--accent-ink)}
+/* steps that start a line hang their +/− in the left margin so the text stays aligned */
+.doc-text .opt-seg.line > .opt-tog{margin-left:-25px;margin-right:7px}
 .doc-text .opt-seg:not(.off) > .opt-tog::before{content:"−"}
 .pop{position:fixed;z-index:60;background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 12px 32px -8px rgb(24 24 27 / .25),0 2px 6px rgb(24 24 27 / .08);padding:8px;display:flex;flex-direction:column;gap:2px;max-height:min(420px,70vh);overflow:auto}
 .pop-title{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);padding:6px 8px}
@@ -222,7 +224,7 @@ mark.fld.hole{background:var(--accent-soft);color:var(--accent-text);box-shadow:
 .pop-opt[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent-text);font-weight:600}
 .pop-opt[aria-pressed="true"] kbd{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 .pop-foot{display:flex;gap:6px;flex-wrap:wrap;border-top:1px solid var(--line);margin-top:6px;padding-top:8px}
-@media (max-width:899px){ .doc-text{padding:16px 16px 20px;font-size:14px} .guide .pending{margin-left:0} .doc-page{padding-bottom:110px} }
+@media (max-width:899px){ .doc-text{padding:16px 16px 20px 32px;font-size:14px} .guide .pending{margin-left:0} .doc-page{padding-bottom:110px} }
 
 /* pages: editor, import, welcome */
 .page{height:100%;overflow:auto}
@@ -618,7 +620,7 @@ function docHTML(src, prefix){
     else if(!lineStart && src[start-1]===' '){ start-=1; pre=' '; }
     html += inlineHTML(src.slice(last,start));
     const k=prefix+(i++);
-    html += `${esc(pre)}<span class="opt-seg off" data-opt="${k}"><span class="opt-tog ui" contenteditable="false" data-action="tog" role="button" tabindex="-1" title="Incluir este paso"></span>${inlineHTML(m[1])}${esc(post)}</span>`;
+    html += `${esc(pre)}<span class="opt-seg off${lineStart?' line':''}" data-opt="${k}"><span class="opt-tog ui" contenteditable="false" data-action="tog" role="button" tabindex="-1" title="Incluir este paso"></span>${inlineHTML(m[1])}${esc(post)}</span>`;
     last=end; OPT.lastIndex=m.index+m[0].length;
   }
   return html + inlineHTML(src.slice(last));
