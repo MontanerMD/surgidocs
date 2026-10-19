@@ -32,6 +32,10 @@ Si el mismo nombre de campo aparece varias veces, se rellena una sola vez.
 
 Para importar en texto, cada plantilla empieza con `# Título`. Debajo pueden ir las líneas `tipo:`, `sección:` y `etiquetas:`. Una línea `Recomendaciones al alta:` separa automáticamente el segundo cuadro.
 
+## Guardado en la nube (Cloudflare)
+
+Si la app se publica en Cloudflare Pages con un espacio KV, las plantillas se guardan en la nube y se ven iguales en todos los ordenadores. Consultar es libre y editar pide una contraseña. Instrucciones en [CLOUDFLARE.md](CLOUDFLARE.md). En GitHub Pages la app funciona igual, pero los cambios se guardan solo en cada navegador.
+
 ## Privacidad
 
 - **Plantillas:** la app funciona entera en el navegador, sin servidor ni base de datos externa. Las plantillas que crees o modifiques se guardan solo en ese navegador (`localStorage`). Usa **Importar → Descargar .json** para hacer copias de seguridad o pasarlas a otro dispositivo.

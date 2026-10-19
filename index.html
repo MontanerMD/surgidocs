@@ -372,6 +372,7 @@ pre.sample{margin:0;font-family:var(--f-mono);font-size:11.5px;background:var(--
     <label class="search"><span id="searchIco"></span><span class="sr">Buscar plantillas</span>
       <input id="q" type="search" placeholder="Buscar plantilla, etiqueta o texto…" autocomplete="off"><kbd>/</kbd></label>
     <div class="top-actions" id="topActions">
+      <button class="btn ghost" id="btnUnlock" data-action="unlock" hidden title="Pide la contraseña de edición">Activar edición</button>
       <button class="btn outline" data-action="import">Importar</button>
       <button class="btn primary" data-action="new" id="btnNew">Nueva plantilla</button>
     </div>
@@ -523,8 +524,34 @@ function tokensHTML(src, vals, fmap){
 function loadLocal(){ try{ const raw=localStorage.getItem(LS_KEY); const arr=raw?JSON.parse(raw):[]; state.items=new Map(arr.map(o=>[o.id,o])); }catch{ state.items=new Map(); } }
 function persistLocal(){ try{ localStorage.setItem(LS_KEY, JSON.stringify([...state.items.values()])); }catch{ toast('No se pudo guardar en este navegador'); } }
 function bodyOf(o){ const {id, ...rest}=o; return rest; }
+/* cloud mode: Cloudflare Pages Function at /api/plantillas */
+const API='api/plantillas', KEY_LS='plantillario.editKey', CLOUD_CACHE='plantillario.cloud.v1';
+const getEditKey=()=>{ try{ return localStorage.getItem(KEY_LS)||''; }catch{ return ''; } };
+const setEditKey=k=>{ try{ k?localStorage.setItem(KEY_LS,k):localStorage.removeItem(KEY_LS); }catch{} };
+async function cloudFetchAll(){
+  const r=await fetch(API,{cache:'no-store',headers:{accept:'application/json'}});
+  if(!r.ok) throw new Error('http '+r.status);
+  const d=await r.json(); if(!d || !Array.isArray(d.items)) throw new Error('bad');
+  return d;
+}
+async function cloudCheck(k){
+  try{ const r=await fetch(API+'?check',{cache:'no-store',headers:{'x-edit-key':k}}); if(!r.ok) return {ok:false}; return await r.json(); }catch{ return {ok:false,offline:true}; }
+}
+async function cloudOps(ops){
+  const k=getEditKey();
+  let r;
+  try{ r=await fetch(API,{method:'POST',headers:{'content-type':'application/json','x-edit-key':k},body:JSON.stringify({ops})}); }
+  catch{ throw {code:'offline'}; }
+  if(r.status===401){ setEditKey(''); state.canWrite=false; applyWriteMode(); throw {code:'unauthorized'}; }
+  if(!r.ok) throw {code:'cloud_'+r.status};
+  const d=await r.json(); state.rev=d.rev||state.rev; cacheCloud(); return d;
+}
+function cacheCloud(){ try{ localStorage.setItem(CLOUD_CACHE, JSON.stringify([...state.items.values()])); }catch{} }
 function dbErr(e){
   const c=e&&e.code;
+  if(c==='unauthorized') return 'La contraseña de edición ya no es válida. Vuelve a desbloquear la edición.';
+  if(c==='offline') return 'No hay conexión con el servidor. Inténtalo de nuevo.';
+  if(c==='cloud_503') return 'El servidor aún no está configurado para guardar (falta el espacio KV o la contraseña).';
   if(c==='invalid_argument'){ state.canWrite=false; applyWriteMode(); return 'No tienes permiso para modificar estas plantillas.'; }
   if(c==='quota_exceeded') return 'Se ha llenado el espacio de la base de datos. Borra plantillas antiguas.';
   if(c==='resource_exhausted') return 'Demasiadas operaciones seguidas. Espera unos segundos.';
@@ -532,18 +559,21 @@ function dbErr(e){
 }
 async function saveItem(o){
   if(state.mode==='db'){ await db.collection(COL).doc(o.id).set(bodyOf(o)); state.items.set(o.id,o); }
+  else if(state.mode==='cloud'){ await cloudOps([{op:'set',item:o}]); state.items.set(o.id,o); cacheCloud(); }
   else { state.items.set(o.id,o); persistLocal(); }
 }
 async function patchItem(id, patch){
   const cur=state.items.get(id); if(!cur) return;
   const next={...cur,...patch};
-  if(state.mode==='db'){ await db.collection(COL).doc(id).update(patch); }
-  else { persistLocal(); }
-  state.items.set(id,next);
+  if(state.mode==='db'){ await db.collection(COL).doc(id).update(patch); state.items.set(id,next); }
+  else if(state.mode==='cloud'){ await cloudOps([{op:'patch',id,patch}]); state.items.set(id,next); cacheCloud(); }
+  else { state.items.set(id,next); persistLocal(); }
 }
 async function deleteItem(id){
   if(state.mode==='db'){ await db.collection(COL).doc(id).delete(); }
-  state.items.delete(id); if(state.mode!=='db') persistLocal();
+  else if(state.mode==='cloud'){ await cloudOps([{op:'delete',id}]); }
+  state.items.delete(id);
+  if(state.mode==='cloud') cacheCloud(); else if(state.mode!=='db') persistLocal();
 }
 
 /* ---------- list ---------- */
@@ -604,6 +634,7 @@ function renderStatus(){
   if(!state.ready){ s.className='status'; s.innerHTML='<i></i>Cargando…'; return; }
   const n=state.items.size;
   if(state.mode==='db'){ s.className='status'; s.innerHTML=`<i></i>${n} plantilla${n===1?'':'s'} · sincronizadas`; }
+  else if(state.mode==='cloud'){ s.className='status'; s.innerHTML=`<i></i>${n} plantilla${n===1?'':'s'} · guardadas en la nube${state.canWrite?' · edición activada':''}`; }
   else { s.className='status local'; s.innerHTML=`<i></i>${n} plantilla${n===1?'':'s'} · guardadas en este navegador`; }
 }
 
@@ -1226,6 +1257,7 @@ Paciente en {{Posición: Lloyd-Davies | decúbito supino}}...</pre>
         <button class="btn" data-action="export-copy">${ico('copy')}Copiar JSON</button>
       </div>
     </section>
+    ${state.mode==='cloud'&&w?`<section class="card"><h2>Edición en este ordenador</h2><p>La edición está activada en este navegador. Si es un ordenador compartido, desactívala al terminar.</p><div><button class="btn" data-action="lock">Desactivar la edición</button></div></section>`:''}
     ${state.mode==='local'&&w?`<section class="card"><h2>Plantillas iniciales</h2><p>Vuelve a añadir las plantillas que trae la app y que hayas borrado. Las que ya tienes no se tocan.</p><div><button class="btn" data-action="restore-seed">${ico('reset')}Restaurar plantillas iniciales</button></div></section>`:''}
     <p class="notice">Las plantillas no deben contener datos de pacientes. Usa campos {{ }} para todo lo que identifique a una persona.</p>`);
 }
@@ -1268,7 +1300,32 @@ function copyText(text, okMsg){
 function applyWriteMode(){
   const show=state.canWrite;
   $('#btnNew').hidden=!show; $('#navNew').hidden=!show;
+  const u=$('#btnUnlock'); if(u) u.hidden = !(state.mode==='cloud' && !state.canWrite);
+  renderStatus && state.ready && renderStatus();
 }
+function openUnlock(){
+  const m=$('#modal');
+  m.innerHTML=`<form class="modal-card" id="unlockForm" role="dialog" aria-modal="true" aria-labelledby="ulT" autocomplete="on">
+    <div class="modal-head"><h2 id="ulT">Activar la edición en este ordenador</h2><span class="hint">Las plantillas se pueden consultar sin contraseña. Para crearlas o modificarlas, escribe la contraseña de edición.</span></div>
+    <input type="text" name="username" value="plantillario" autocomplete="username" hidden>
+    <div class="f"><label for="unlock-key">Contraseña de edición</label><input class="inp" type="password" id="unlock-key" autocomplete="current-password" required></div>
+    <p class="hint">Se recordará en este navegador. En un ordenador compartido, desactívala al terminar desde Importar → «Desactivar la edición».</p>
+    <p class="err" id="unlock-err"></p>
+    <div class="modal-bar"><span class="sp"></span><button type="button" class="btn ghost" data-dlg="cancel">Cancelar</button><button type="submit" class="btn primary">${ico('check')}Activar edición</button></div>
+  </form>`;
+  m.hidden=false; setTimeout(()=>$('#unlock-key').focus(),0);
+}
+async function submitUnlock(ev){
+  ev.preventDefault();
+  const k=$('#unlock-key').value; const err=$('#unlock-err'); const btn=ev.submitter; if(btn) btn.disabled=true;
+  const res=await cloudCheck(k);
+  if(btn) btn.disabled=false;
+  if(res.ok){ setEditKey(k); state.canWrite=true; closeDialog(false); applyWriteMode(); renderList(); renderMain(); toast('Edición activada en este ordenador'); }
+  else if(res.offline){ err.textContent='No hay conexión con el servidor.'; }
+  else if(res.configured===false){ err.textContent='Aún no se ha definido la contraseña de edición en Cloudflare.'; }
+  else { err.textContent='Contraseña incorrecta.'; $('#unlock-key').select(); }
+}
+document.addEventListener('submit', ev=>{ if(ev.target.id==='unlockForm') submitUnlock(ev); });
 
 /* ---------- events ---------- */
 document.addEventListener('mousedown', ev=>{
@@ -1304,6 +1361,8 @@ document.addEventListener('click', async ev=>{
     case 'home': go('list'); break;
     case 'new': if(state.canWrite) go('edit',null); break;
     case 'import': go('import'); break;
+    case 'unlock': openUnlock(); break;
+    case 'lock': setEditKey(''); state.canWrite=false; applyWriteMode(); renderList(); go('list'); toast('Edición desactivada en este ordenador'); break;
     case 'open': closeChoice(); go('detail',b.dataset.id); break;
     case 'open-current': state.currentId?go('detail',state.currentId):go('list'); break;
     case 'type': state.type=b.dataset.v; renderList(); break;
@@ -1429,7 +1488,23 @@ async function fetchSeedData(){
     return {version:Number(d.version)||1, items:arr}; }catch{ return null; }
 }
 async function fetchSeed(){ const d=await fetchSeedData(); return d?d.items:[]; }
+async function startCloud(){
+  let d=null;
+  try{ d=await cloudFetchAll(); }catch{ return false; }
+  state.mode='cloud'; state.rev=d.rev||0;
+  state.items=new Map(d.items.map(o=>[o.id,o])); cacheCloud();
+  state.canWrite=false;
+  const k=getEditKey();
+  if(k){ const c=await cloudCheck(k); if(c.ok) state.canWrite=true; else if(!c.offline) setEditKey(''); }
+  applyWriteMode(); onData();
+  document.addEventListener('visibilitychange', async ()=>{
+    if(document.visibilityState!=='visible' || state.view==='edit') return;
+    try{ const n=await cloudFetchAll(); if((n.rev||0)!==state.rev){ state.rev=n.rev||0; state.items=new Map(n.items.map(o=>[o.id,o])); cacheCloud(); onData(); } }catch{}
+  });
+  return true;
+}
 async function startLocal(){
+  if(await startCloud()) return;
   state.mode='local'; loadLocal();
   const seed=await fetchSeedData();
   if(seed && seed.items.length){
