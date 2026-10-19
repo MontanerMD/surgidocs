@@ -201,7 +201,7 @@ select.inp{appearance:auto}
 .guide .opt-tog.demo{cursor:default}
 .guide .pending{margin-left:auto;font-weight:700;color:var(--accent-text);white-space:nowrap}
 .guide .pending.done{color:var(--qx)}
-.doc-text{font-size:14.5px;line-height:1.75;padding:22px 26px 26px}
+.doc-text{font-size:14.5px;line-height:1.75;padding:24px 32px 28px 56px}
 .doc-text strong.hd{font-weight:700;color:var(--ink)}
 mark.fld{background:none;color:var(--ink);font-weight:600;box-shadow:inset 0 -2px 0 var(--fill-line);padding:0 1px;border-radius:2px;cursor:text;-webkit-box-decoration-break:clone;box-decoration-break:clone}
 mark.fld.hole{background:var(--accent-soft);color:var(--accent-text);box-shadow:inset 0 0 0 1px var(--accent-line);border-radius:6px;padding:1px 7px;font-size:.9em;cursor:pointer}
@@ -214,7 +214,7 @@ mark.fld.hole{background:var(--accent-soft);color:var(--accent-text);box-shadow:
 .opt-tog::before{content:"+"}
 .doc-text .opt-seg:not(.off) > .opt-tog{background:var(--accent);color:var(--accent-ink)}
 /* steps that start a line hang their +/− in the left margin so the text stays aligned */
-.doc-text .opt-seg.line > .opt-tog{margin-left:-25px;margin-right:7px}
+.doc-text .opt-seg.line > .opt-tog{margin-left:-34px;margin-right:16px}
 .doc-text .opt-seg:not(.off) > .opt-tog::before{content:"−"}
 .pop{position:fixed;z-index:60;background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 12px 32px -8px rgb(24 24 27 / .25),0 2px 6px rgb(24 24 27 / .08);padding:8px;display:flex;flex-direction:column;gap:2px;max-height:min(420px,70vh);overflow:auto}
 .pop-title{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);padding:6px 8px}
@@ -224,7 +224,7 @@ mark.fld.hole{background:var(--accent-soft);color:var(--accent-text);box-shadow:
 .pop-opt[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent-text);font-weight:600}
 .pop-opt[aria-pressed="true"] kbd{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 .pop-foot{display:flex;gap:6px;flex-wrap:wrap;border-top:1px solid var(--line);margin-top:6px;padding-top:8px}
-@media (max-width:899px){ .doc-text{padding:16px 16px 20px 32px;font-size:14px} .guide .pending{margin-left:0} .doc-page{padding-bottom:110px} }
+@media (max-width:899px){ .doc-text{padding:18px 18px 22px 44px;font-size:14px} .doc-text .opt-seg.line > .opt-tog{margin-left:-30px;margin-right:12px} .guide .pending{margin-left:0} .doc-page{padding-bottom:110px} }
 
 /* pages: editor, import, welcome */
 .page{height:100%;overflow:auto}
