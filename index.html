@@ -314,14 +314,55 @@ textarea.recs-ta{min-height:24vh}
 .filelabel input{position:absolute;opacity:0;width:1px;height:1px}
 pre.sample{margin:0;font-family:var(--f-mono);font-size:11.5px;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px;overflow-x:auto;line-height:1.6;color:var(--ink2)}
 .notice{font-size:12px;color:var(--faint);margin:0}
-.welcome{padding-top:6vh}
-.welcome .lead{color:var(--muted);font-size:15px;max-width:58ch;margin:0}
-.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
-.stat{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:6px}
-.stat span{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted);font-weight:600}
-.stat b{font-size:26px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
-.quick{display:flex;flex-wrap:wrap;gap:8px}
-.quick .btn{height:36px}
+.welcome{gap:30px!important;padding-top:3vh}
+.hm-hero{display:flex;flex-direction:column;gap:14px}
+.hm-hello{font-size:12.5px;font-weight:600;color:var(--muted);letter-spacing:.01em;margin:0}
+.hm-hero h1{font-size:30px;margin:0}
+.hm-search{position:relative}
+.hm-search .ico{position:absolute;left:16px;top:50%;transform:translateY(-50%);color:var(--faint);width:18px;height:18px;pointer-events:none}
+.hm-search input{width:100%;height:54px;border-radius:14px;border:1px solid var(--line2);background:var(--surface);padding:0 56px 0 46px;font:inherit;font-size:15.5px;color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.04),0 6px 18px -10px rgba(0,0,0,.12);outline:none;transition:border-color .15s, box-shadow .15s}
+.hm-search input::placeholder{color:var(--faint)}
+.hm-search input::-webkit-search-cancel-button{-webkit-appearance:none;appearance:none}
+.hm-search input:focus{border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
+.hm-search kbd{position:absolute;right:14px;top:50%;transform:translateY(-50%)}
+.hm-results{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:6px;gap:2px}
+.hm-results:empty{display:none}
+.hm-res{display:flex;align-items:center;gap:12px;border:0;background:none;text-align:left;padding:10px 12px;border-radius:10px;color:var(--ink);font:inherit;cursor:pointer;width:100%}
+.hm-res:hover,.hm-res[aria-selected="true"]{background:var(--hover)}
+.hm-res[aria-selected="true"] .hm-go{opacity:1}
+.hm-res .t{flex:1;min-width:0;display:flex;flex-direction:column}
+.hm-res .t b{font-weight:600;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hm-res .t small{font-size:12px;color:var(--muted)}
+.hm-go{font-size:11.5px;color:var(--muted);opacity:0;display:flex;align-items:center;gap:6px;flex:none}
+.hm-none{padding:14px 12px;color:var(--muted);font-size:13.5px}
+.hm-sec{display:flex;flex-direction:column;gap:12px}
+.hm-sec-h{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.hm-sec-h h2{font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0}
+.hm-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+.hm-card{position:relative;display:flex;flex-direction:column;gap:8px;text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:14px 16px 14px 18px;font:inherit;color:var(--ink);cursor:pointer;overflow:hidden;min-height:86px;transition:border-color .15s, transform .15s, box-shadow .15s}
+.hm-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--t,var(--faint))}
+.hm-card:hover{border-color:var(--line2);transform:translateY(-1px);box-shadow:0 8px 20px -14px rgba(0,0,0,.25)}
+.hm-card b{font-size:14px;font-weight:600;line-height:1.3}
+.hm-card small{font-size:12px;color:var(--muted);margin-top:auto;display:flex;align-items:center;gap:6px}
+.hm-types{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.hm-type{border:1px solid var(--line);background:var(--surface);border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
+.hm-type-h{display:flex;align-items:center;gap:10px;padding:14px 16px 10px;border:0;background:none;font:inherit;color:var(--ink);text-align:left;cursor:pointer;width:100%}
+.hm-type-h .dot{width:10px;height:10px}
+.hm-type-h b{font-size:15px;font-weight:700;flex:1}
+.hm-type-h .n{font-size:12px;font-weight:700;color:var(--t);background:color-mix(in srgb,var(--t) 12%,transparent);border-radius:999px;padding:2px 9px;font-variant-numeric:tabular-nums}
+.hm-type ul{list-style:none;margin:0;padding:0 8px 6px}
+.hm-type li button{display:flex;align-items:center;gap:8px;width:100%;border:0;background:none;font:inherit;font-size:13.5px;color:var(--ink2);text-align:left;padding:7px 8px;border-radius:8px;cursor:pointer}
+.hm-type li button:hover{background:var(--hover);color:var(--ink)}
+.hm-type li button span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hm-type li button em{font-style:normal;font-size:11px;color:var(--faint);flex:none}
+.hm-type .more{margin:auto 16px 14px;align-self:flex-start;border:0;background:none;padding:4px 0;font:inherit;font-size:12.5px;font-weight:600;color:var(--accent-text);cursor:pointer}
+.hm-type .more:hover{text-decoration:underline}
+.hm-foot{display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px;padding-top:16px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}
+.hm-foot span{display:inline-flex;align-items:center;gap:6px}
+.hm-foot details{flex-basis:100%}
+.hm-foot summary{cursor:pointer;font-weight:600;color:var(--ink2);width:max-content}
+.hm-foot details .syntax{margin-top:10px}
+@media (max-width:899px){ .hm-types{grid-template-columns:1fr} .hm-hero h1{font-size:24px} .hm-search kbd{display:none} }
 
 /* mobile copy bar + bottom nav */
 .copybar{display:none}
@@ -644,6 +685,8 @@ function renderStatus(){
 function setMain(html){ $('#main').innerHTML=`<div class="page"><div class="page-in">${html}</div></div>`; }
 function go(view, id=null){
   state.view=view; state.currentId=id; state.hlKey=null;
+  if(view==='detail' && id) pushRecent(id);
+  if(view!=='list') { homeQ=''; homeSel=0; }
   document.body.dataset.view=view;
   $('#navList').setAttribute('aria-current', view==='list');
   renderMain(); renderList();
@@ -657,23 +700,59 @@ function renderMain(){
   if(v==='import') return renderImport();
   renderWelcome();
 }
+/* recently opened templates: per-browser convenience */
+const RECENT_KEY='surgidocs.recent';
+function getRecent(){ try{ const a=JSON.parse(localStorage.getItem(RECENT_KEY)||'[]'); return Array.isArray(a)?a:[]; }catch{ return []; } }
+function pushRecent(id){ try{ const a=getRecent().filter(x=>x!==id); a.unshift(id); localStorage.setItem(RECENT_KEY,JSON.stringify(a.slice(0,12))); }catch{} }
+let homeQ='', homeSel=0;
+function homeMatches(){
+  const q=norm(homeQ.trim()); if(!q) return [];
+  const words=q.split(/\s+/);
+  return [...state.items.values()].map(o=>{
+    const t=norm(o.title), tags=norm((o.tags||[]).join(' ')+' '+(o.section||'')+' '+(TYPES[o.type]?.label||'')), body=norm((o.body||'')+' '+(o.recs||''));
+    if(!words.every(w=>t.includes(w)||tags.includes(w)||body.includes(w))) return null;
+    let s=0; words.forEach(w=>{ if(t.startsWith(w)) s+=6; else if(t.includes(w)) s+=4; else if(tags.includes(w)) s+=2; else s+=1; });
+    return {o,s:s+Math.min(3,(o.uses||0)/10)+(o.fav?1:0)};
+  }).filter(Boolean).sort((a,b)=>b.s-a.s||a.o.title.localeCompare(b.o.title,'es')).slice(0,8).map(x=>x.o);
+}
+function homeResultsHTML(){
+  if(!homeQ.trim()) return '';
+  const r=homeMatches(); if(homeSel>=r.length) homeSel=0;
+  if(!r.length) return `<div class="hm-none">No hay ninguna plantilla con «${esc(homeQ.trim())}».${state.canWrite?' Puedes crearla con «Nueva plantilla».':''}</div>`;
+  return r.map((o,i)=>`<button class="hm-res t-${esc(o.type)}" role="option" aria-selected="${i===homeSel}" data-action="open" data-id="${esc(o.id)}"><span class="dot"></span><span class="t"><b>${esc(o.title)}</b><small>${esc(TYPES[o.type]?.label||'')} · ${esc(o.section||'General')}</small></span><span class="hm-go"><kbd>↵</kbd> abrir</span></button>`).join('');
+}
+function updateHomeResults(){ const el=$('#hmResults'); if(el) el.innerHTML=homeResultsHTML(); }
+function cardHTML(o,meta){ return `<button class="hm-card t-${esc(o.type)}" data-action="open" data-id="${esc(o.id)}"><b>${esc(o.title)}</b><small><span class="dot"></span>${esc(meta||((TYPES[o.type]?.label||'')+' · '+(o.section||'General')))}</small></button>`; }
 function renderWelcome(){
   const all=[...state.items.values()];
-  const c=t=>all.filter(o=>o.type===t).length;
-  const quick=[...all.filter(o=>o.fav), ...all.filter(o=>!o.fav && o.uses).sort((a,b)=>(b.uses||0)-(a.uses||0))].slice(0,8);
-  setMain(`<div class="welcome" style="display:flex;flex-direction:column;gap:22px">
-    <h1>Elige una plantilla para empezar</h1>
-    <p class="lead">Selecciona una plantilla en el menú de la izquierda. Rellena los campos y, a la derecha, verás el texto exacto que se copiará a la historia clínica.</p>
-    <div class="stats">
-      <div class="stat t-urgencias"><span><i class="dot"></i>Urgencias</span><b>${c('urgencias')}</b></div>
-      <div class="stat t-quirurgica"><span><i class="dot"></i>Quirúrgicas</span><b>${c('quirurgica')}</b></div>
-      <div class="stat t-consulta"><span><i class="dot"></i>Consulta</span><b>${c('consulta')}</b></div>
-      <div class="stat t-comun"><span><i class="dot"></i>Campos comunes</span><b>${c('comun')}</b></div>
+  const h=new Date().getHours();
+  const hello=(h<6?'Buenas noches':h<14?'Buenos días':h<21?'Buenas tardes':'Buenas noches')+' · '+new Date().toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'});
+  const recent=getRecent().map(id=>state.items.get(id)).filter(Boolean).slice(0,6);
+  const favs=all.filter(o=>o.fav).sort((a,b)=>a.title.localeCompare(b.title,'es')).slice(0,9);
+  const rank=(a,b)=>(b.uses||0)-(a.uses||0)||a.title.localeCompare(b.title,'es');
+  const types=TYPE_ORDER.map(t=>[t,all.filter(o=>o.type===t).sort(rank)]).filter(([,a])=>a.length);
+  setMain(`<div class="welcome" style="display:flex;flex-direction:column">
+    <div class="hm-hero">
+      <p class="hm-hello">${esc(hello.charAt(0).toUpperCase()+hello.slice(1))}</p>
+      <h1>¿Qué vas a redactar?</h1>
+      <div class="hm-search">${ico('search')}<input id="hmQ" type="search" autocomplete="off" spellcheck="false" placeholder="Busca una plantilla: apendicectomía, hernia, fisura…" aria-label="Buscar plantilla" aria-controls="hmResults" value="${esc(homeQ)}"><kbd>/</kbd></div>
+      <div class="hm-results" id="hmResults" role="listbox" aria-label="Resultados">${homeResultsHTML()}</div>
     </div>
-    ${quick.length?`<div style="display:flex;flex-direction:column;gap:10px"><div class="side-label" style="padding:0">Acceso rápido</div><div class="quick">${quick.map(o=>`<button class="btn sm t-${esc(o.type)}" data-action="open" data-id="${esc(o.id)}"><span class="dot"></span>${esc(o.title)}</button>`).join('')}</div></div>`:''}
-    ${syntaxHelp()}
-    <p class="notice">Atajos: <kbd>/</kbd> buscar · <kbd>${KEY_COPY}</kbd> copiar informe · <kbd>${KEY_COPY_RECS}</kbd> copiar recomendaciones.</p>
+    ${recent.length?`<section class="hm-sec"><div class="hm-sec-h"><h2>Usadas hace poco</h2></div><div class="hm-cards">${recent.map(o=>cardHTML(o)).join('')}</div></section>`:''}
+    ${favs.length?`<section class="hm-sec"><div class="hm-sec-h"><h2>Favoritas</h2></div><div class="hm-cards">${favs.map(o=>cardHTML(o)).join('')}</div></section>`:''}
+    <section class="hm-sec"><div class="hm-sec-h"><h2>Todas las plantillas</h2></div>
+      <div class="hm-types">${types.map(([t,arr])=>`<div class="hm-type t-${t}">
+        <button class="hm-type-h" data-action="home-type" data-v="${t}"><span class="dot"></span><b>${esc(TYPES[t].plural)}</b><span class="n">${arr.length}</span></button>
+        <ul>${arr.slice(0,6).map(o=>`<li><button data-action="open" data-id="${esc(o.id)}"><span>${esc(o.title)}</span><em>${esc(o.section||'')}</em></button></li>`).join('')}</ul>
+        ${arr.length>6?`<button class="more" data-action="home-type" data-v="${t}">Ver las ${arr.length} →</button>`:''}
+      </div>`).join('')}</div>
+    </section>
+    <footer class="hm-foot">
+      <span><kbd>/</kbd> buscar</span><span><kbd>Tab</kbd> siguiente hueco</span><span><kbd>${KEY_COPY}</kbd> copiar informe</span><span><kbd>${KEY_COPY_RECS}</kbd> copiar recomendaciones</span>
+      ${state.canWrite?`<details><summary>Cómo se escriben los campos de una plantilla</summary>${syntaxHelp()}</details>`:''}
+    </footer>
   </div>`);
+  if(isDesktop() && !document.activeElement?.closest?.('.side')) setTimeout(()=>{ const i=$('#hmQ'); if(i && state.view!=='detail'){ i.focus(); i.setSelectionRange(i.value.length,i.value.length); } },0);
 }
 function syntaxHelp(){
   return `<p class="syntax"><b>Cómo se escriben los campos.</b> <code>{{Edad}}</code> hueco de texto · <code>{{Lado: derecha | izquierda}}</code> opciones · <code>{{Hallazgos*: a | b | c}}</code> varias opciones · <code>{{Fiebre: Afebril | Fiebre de … ºC}}</code> la opción con «…» abre un hueco · <code>{{Fecha}}</code> calendario · <code>[[- Drenaje de Penrose…]]</code> paso opcional, solo se copia si se marca. Un mismo nombre de campo se rellena una sola vez.</p>`;
@@ -1368,6 +1447,7 @@ document.addEventListener('click', async ev=>{
     case 'open': closeChoice(); go('detail',b.dataset.id); break;
     case 'open-current': state.currentId?go('detail',state.currentId):go('list'); break;
     case 'type': state.type=b.dataset.v; renderList(); break;
+    case 'home-type': state.type=b.dataset.v; state.section='all'; renderList(); { const l=$('.side .list, #list'); if(l) l.scrollTop=0; } if(!isDesktop()) go('list'); break;
     case 'sec': state.section=b.dataset.v; renderList(); break;
     case 'clear-filters': state.type='all'; state.section='all'; state.q=''; $('#q').value=''; renderList(); break;
     case 'edit': go('edit',state.currentId); break;
@@ -1425,6 +1505,7 @@ document.addEventListener('input', ev=>{
     }
     saveDocs(); return;
   }
+  if(t.id==='hmQ'){ homeQ=t.value; homeSel=0; updateHomeResults(); return; }
   if(t.id==='q'){ state.q=t.value; renderList(); return; }
   if(t.id==='ed-body'||t.id==='ed-recs'||(t.classList&&t.classList.contains('code'))){ updateDetected(); $('#edErr').textContent=''; return; }
   if(t.id==='ed-title'){ $('#edErr').textContent=''; return; }
@@ -1462,8 +1543,14 @@ document.addEventListener('keydown', ev=>{
   if(mod && ev.key==='Enter' && state.view==='detail'){ ev.preventDefault(); copyPart(ev.shiftKey?'recs':'body'); return; }
   const inDoc = ev.target.closest && ev.target.closest('.doc-text');
   if(inDoc && ev.key==='Tab'){ ev.preventDefault(); nextHole(ev.shiftKey?-1:1); return; }
+  if(ev.target.id==='hmQ'){
+    const r=homeMatches();
+    if(ev.key==='ArrowDown'||ev.key==='ArrowUp'){ if(!r.length) return; ev.preventDefault(); homeSel=(homeSel+(ev.key==='ArrowDown'?1:-1)+r.length)%r.length; updateHomeResults(); return; }
+    if(ev.key==='Enter'){ if(r[homeSel]){ ev.preventDefault(); closeChoice(); go('detail',r[homeSel].id); } return; }
+    if(ev.key==='Escape'){ if(homeQ){ ev.preventDefault(); homeQ=''; ev.target.value=''; updateHomeResults(); } else ev.target.blur(); return; }
+  }
   if(ev.key==='Escape' && document.activeElement && document.activeElement.id==='q'){ document.activeElement.blur(); return; }
-  if(ev.key==='/' && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName) && !document.activeElement.isContentEditable){ ev.preventDefault(); if(state.view!=='list' && !isDesktop()) go('list'); $('#q').focus(); }
+  if(ev.key==='/' && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName) && !document.activeElement.isContentEditable){ ev.preventDefault(); if(state.view!=='list' && !isDesktop()) go('list'); const hq=$('#hmQ'); (hq && state.view==='list' ? hq : $('#q')).focus(); }
 });
 window.addEventListener('resize', positionPop);
 document.addEventListener('scroll', ev=>{ if(!(ev.target.closest && ev.target.closest('#pop'))) positionPop(); }, true);
