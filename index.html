@@ -200,6 +200,9 @@ select.inp{appearance:auto}
 .mat-row.on .mat-n{color:var(--ink)}
 .mat-n:focus{background:var(--sunk);color:var(--ink)}
 .mat-n.ro{cursor:default;overflow:visible}
+.mat-q.ro{width:30px;justify-content:center;font-weight:600;font-size:13.5px;font-variant-numeric:tabular-nums;color:var(--ink2);cursor:default}
+.mat-row:not(.on) .mat-q.ro{color:var(--line2)}
+.mat-row:hover .mat-q.ro{background:none}
 .mat-del{width:28px;height:28px;border:0;border-radius:8px;background:none;color:var(--faint);cursor:pointer;opacity:0;display:grid;place-items:center;font-size:17px;line-height:1}
 .mat-row:hover .mat-del,.mat-del:focus-visible{opacity:1}
 .mat-del:hover{background:var(--sunk);color:var(--ink)}
@@ -569,18 +572,19 @@ function parseMat(src){
 }
 function matRowHTML(r){
   const on=Number(r.q)>0;
-  return `<div class="mat-row${on?' on':''}"><span class="mat-q"><button type="button" data-action="mat-dec" aria-label="Uno menos" tabindex="-1">−</button><input type="number" inputmode="numeric" min="0" max="999" value="${esc(r.q||'')}" placeholder="–" aria-label="Cantidad de ${esc(r.n||'material')}"><button type="button" data-action="mat-inc" aria-label="Uno más" tabindex="-1">+</button></span>${state.canWrite?`<textarea class="mat-n" rows="1" placeholder="Nombre del material" aria-label="Material" spellcheck="true">${esc(r.n||'')}</textarea><button type="button" class="mat-del" data-action="mat-del" aria-label="Quitar este material" title="Quitar">×</button>`:`<span class="mat-n ro" data-n="${esc(r.n||'')}">${esc(r.n||'')}</span><span></span>`}</div>`;
+  if(!state.canWrite) return `<div class="mat-row${on?' on':''}"><span class="mat-q ro" data-q="${esc(r.q||'')}">${on?esc(String(Number(r.q))):'–'}</span><span class="mat-n ro" data-n="${esc(r.n||'')}">${esc(r.n||'')}</span><span></span></div>`;
+  return `<div class="mat-row${on?' on':''}"><span class="mat-q"><button type="button" data-action="mat-dec" aria-label="Uno menos" tabindex="-1">−</button><input type="number" inputmode="numeric" min="0" max="999" value="${esc(r.q||'')}" placeholder="–" aria-label="Cantidad de ${esc(r.n||'material')}"><button type="button" data-action="mat-inc" aria-label="Uno más" tabindex="-1">+</button></span><textarea class="mat-n" rows="1" placeholder="Nombre del material" aria-label="Material" spellcheck="true">${esc(r.n||'')}</textarea><button type="button" class="mat-del" data-action="mat-del" aria-label="Quitar este material" title="Quitar">×</button></div>`;
 }
 function renderMat(rows){
   const box=$('#matList'); if(!box) return;
   setTimeout(matFit,0);
   const w=state.canWrite;
   box.innerHTML=(rows.length?rows.map(matRowHTML).join(''):`<div class="mat-empty">Esta plantilla aún no tiene material.${w?' Añádelo aquí o al editar la plantilla.':' Para añadirlo, activa la edición.'}</div>`)+(w?`<button type="button" class="mat-add" data-action="mat-add">+ Añadir material</button>`:'');
-  const h=$('#matHint'); if(h) h.textContent='Pon la cantidad en cada material usado. Solo se copian los que tienen número.'+(w?'':' Para cambiar la lista de material, activa la edición.');
+  const h=$('#matHint'); if(h) h.textContent= w ? 'Pon la cantidad en cada material usado. Solo se copian los que tienen número.' : 'Solo se copian los materiales con número. Para cambiar el material o las cantidades, activa la edición.';
 }
-function readMat(){ return [...document.querySelectorAll('#matList .mat-row')].map(r=>({q:r.querySelector('.mat-q input').value.trim(), n:(()=>{ const e=r.querySelector('.mat-n'); return (e.tagName==='TEXTAREA'?e.value:(e.dataset.n||'')).trim(); })()})); }
+function readMat(){ return [...document.querySelectorAll('#matList .mat-row')].map(r=>({q:(()=>{ const i=r.querySelector('.mat-q input'); return (i?i.value:(r.querySelector('.mat-q').dataset.q||'')).trim(); })(), n:(()=>{ const e=r.querySelector('.mat-n'); return (e.tagName==='TEXTAREA'?e.value:(e.dataset.n||'')).trim(); })()})); }
 function matText(){ return readMat().filter(r=>r.n && Number(r.q)>0).map(r=>`- ${r.n} x${Number(r.q)}`).join('\n'); }
-function matRowSync(row){ row.classList.toggle('on', Number(row.querySelector('.mat-q input').value)>0); }
+function matRowSync(row){ const i=row.querySelector('.mat-q input'); if(i) row.classList.toggle('on', Number(i.value)>0); }
 function matFit(){ if(CSS.supports && CSS.supports('field-sizing','content')) return; document.querySelectorAll('#matList textarea.mat-n').forEach(t=>{ t.style.height='auto'; t.style.height=t.scrollHeight+'px'; }); }
 function joinMulti(arr){ if(!arr||!arr.length) return ''; if(arr.length===1) return arr[0]; return arr.slice(0,-1).join(', ')+' y '+arr[arr.length-1]; }
 function fillGap(f, s, vals){
@@ -1001,7 +1005,7 @@ async function copyPart(part){
   if(part==='recs' && !(o.recs&&o.recs.trim())) return;
   const el = part==='recs' ? $('#preview-recs') : $('#preview');
   const txt = part==='mat' ? matText() : serializeDoc(el);
-  if(part==='mat' && !txt.trim()){ toast('Pon la cantidad en algún material'); const q=document.querySelector('.mat-q input'); if(q) q.focus(); return; }
+  if(part==='mat' && !txt.trim()){ toast(state.canWrite?'Pon la cantidad en algún material':'Ningún material tiene cantidad'); const q=document.querySelector('.mat-q input'); if(q) q.focus(); return; }
   const ok=await copyText(txt, part==='recs'?'Recomendaciones copiadas':part==='mat'?'Material copiado':(o.type==='quirurgica'?'Protocolo copiado':o.recs?'Informe copiado':'Texto copiado'));
   if(ok && state.canWrite){ patchItem(o.id,{uses:(o.uses||0)+1,lastUsed:nowISO()}).then(()=>renderList()).catch(()=>{}); }
 }
@@ -1523,7 +1527,7 @@ document.addEventListener('click', async ev=>{
       break; }
     case 'reset': { const o=state.items.get(state.currentId); if(!o) break; closeChoice(); delete state.docs[o.id]; renderDetail(o); $('#docPage') && ($('#docPage').scrollTop=0); toast('Plantilla reiniciada'); break; }
     case 'copy': copyPart(b.dataset.part||'body'); break;
-    case 'mat-inc': case 'mat-dec': { const row=b.closest('.mat-row'), i=row.querySelector('.mat-q input'); const v=Math.max(0,Math.min(999,(Number(i.value)||0)+(b.dataset.action==='mat-inc'?1:-1))); i.value=v?String(v):''; matRowSync(row); saveDocs(); break; }
+    case 'mat-inc': case 'mat-dec': { if(!state.canWrite) break; const row=b.closest('.mat-row'), i=row.querySelector('.mat-q input'); const v=Math.max(0,Math.min(999,(Number(i.value)||0)+(b.dataset.action==='mat-inc'?1:-1))); i.value=v?String(v):''; matRowSync(row); saveDocs(); break; }
     case 'mat-del': { if(!state.canWrite) break; const row=b.closest('.mat-row'); const nx=row.nextElementSibling; row.remove(); if(!document.querySelector('#matList .mat-row')) renderMat([]); saveDocs(); const f=nx&&nx.querySelector&&nx.querySelector('.mat-n'); if(f) f.focus(); break; }
     case 'mat-add': { if(!state.canWrite) break; const box=$('#matList'); const em=box.querySelector('.mat-empty'); if(em) em.remove(); b.insertAdjacentHTML('beforebegin', matRowHTML({n:'',q:'1'})); const row=b.previousElementSibling; row.querySelector('.mat-n').focus(); saveDocs(); break; }
     case 'ins': insertAtCursor(b.dataset.v,b.dataset.sel); break;
