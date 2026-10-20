@@ -770,7 +770,7 @@ function fldHTML(raw){
   return `<mark class="fld hole${f.options?' choice':''}" data-k="${esc(k)}" data-label="${esc(l)}" data-t="${t}">${esc(l)}</mark>`;
 }
 /* uppercase section titles («ANESTESIA:», «TÉCNICA:»…) shown in bold; the copied text stays plain */
-const HEADING = /(^|\n)([A-ZÁÉÍÓÚÜÑ][A-ZÁÉÍÓÚÜÑ0-9 \/().,±+-]{1,70}:|(?:Motivo de consulta|Enfermedad actual|Exploración física|Exploraciones complementarias|Pruebas complementarias|Tratamiento administrado en urgencias|Tratamiento habitual|Evolución):)/g;
+const HEADING = /(^|\n)([A-ZÁÉÍÓÚÜÑ][A-ZÁÉÍÓÚÜÑ0-9 \/().,±+-]{1,70}:|(?:Motivo de consulta|Enfermedad actual|Exploración física|Exploraciones complementarias|Pruebas complementarias|Tratamiento administrado en urgencias|Tratamiento habitual|Evolución):|SI APARECEN COMPLICACIONES, ACUDA A URGENCIAS\.)/g;
 const txtHTML = t => esc(t).replace(HEADING, (a,pre,h)=>`${pre}<strong class="hd">${h}</strong>`);
 function inlineHTML(src){
   let html='', last=0, m; TOKEN.lastIndex=0;
