@@ -66,6 +66,7 @@ function cleanItem(o) {
     tags: Array.isArray(o.tags) ? o.tags.slice(0, 20).map(t => str(t, 60)) : [],
     body: str(o.body, 200000),
     recs: str(o.recs, 200000),
+    mat: str(o.mat, 100000),
     fav: !!o.fav,
     uses: Math.max(0, Math.min(1e7, Number(o.uses) || 0)),
     createdAt: str(o.createdAt, 40),
