@@ -315,7 +315,7 @@ mark.fld.hole{background:var(--accent-soft);color:var(--accent-text);box-shadow:
 .ed-text{min-height:220px;padding:18px 22px 26px;white-space:pre-wrap;overflow-wrap:anywhere;font-size:14px;line-height:1.85;outline:none;color:var(--ink2);caret-color:var(--accent)}
 .ed-text:empty::before{content:attr(data-ph);color:var(--faint)}
 .ed-block[data-part="recs"] .ed-text,.ed-block[data-part="mat"] .ed-text{min-height:120px}
-.chip-f{display:inline;padding:2px 8px;border-radius:7px;background:var(--accent-soft);color:var(--accent-text);box-shadow:inset 0 0 0 1px var(--accent-line);font-size:.9em;cursor:pointer;user-select:none;-webkit-user-select:none;white-space:nowrap;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+.chip-f{display:inline;padding:2px 8px;border-radius:7px;background:var(--accent-soft);color:var(--accent-text);box-shadow:inset 0 0 0 1px var(--accent-line);font-size:.9em;cursor:pointer;white-space:nowrap;-webkit-box-decoration-break:clone;box-decoration-break:clone}
 .chip-f:hover{box-shadow:inset 0 0 0 1.5px var(--accent)}
 .chip-f b{font-weight:700}
 .chip-f i{font-style:normal;font-size:.85em;opacity:.7;margin-left:6px}
@@ -1291,7 +1291,7 @@ function renderEditor(o){
         <button type="submit" class="btn primary">${ico('check')}Guardar</button>
       </div>
     </form>`);
-  document.querySelectorAll('.ed-text').forEach(makeEditable);
+  document.querySelectorAll('.ed-text').forEach(el=>{ makeEditable(el); ensureCaretSlots(el); });
   updateDetected();
   if(isNew) $('#ed-title').focus();
 }
@@ -1299,7 +1299,7 @@ function toggleAdv(on){
   ['body','mat','recs'].forEach(part=>{
     const div=$('#ed-'+part), ta=$('#ed-'+part+'-code'); if(!div||!ta) return;
     if(on){ ta.value=serializeEd(div); }
-    else { div.innerHTML=edHTML(ta.value); }
+    else { div.innerHTML=edHTML(ta.value); ensureCaretSlots(div); }
     div.hidden=on; ta.hidden=!on;
     const tools=div.parentElement.querySelector('.ed-tools'); if(tools && !tools.hasAttribute('data-never')) tools.hidden=on;
   });
@@ -1327,6 +1327,17 @@ function unwrap(el){ const p=el.parentNode; while(el.firstChild) p.insertBefore(
 function edRange(host){
   if(ED.range && ED.host===host && host.contains(ED.range.commonAncestorContainer)) return ED.range.cloneRange();
   const r=document.createRange(); r.selectNodeContents(host); r.collapse(false); return r;
+}
+/* give the caret a place to land next to non-editable chips (line ends, line starts, chip next to chip) */
+const ZW='​';
+function ensureCaretSlots(host){
+  if(!host) return;
+  host.querySelectorAll('.chip-f').forEach(c=>{
+    const nx=c.nextSibling;
+    if(!nx || nx.nodeType!==3 || !nx.nodeValue || nx.nodeValue[0]==='\n') c.after(document.createTextNode(ZW));
+    const pv=c.previousSibling;
+    if(!pv || (pv.nodeType===3 && (!pv.nodeValue || /\n$/.test(pv.nodeValue))) || (pv.nodeType===1 && !pv.classList.contains('opt-tog'))) c.before(document.createTextNode(ZW));
+  });
 }
 function placeCaret(node, after=true){
   const sel=getSelection(), r=document.createRange();
@@ -1364,7 +1375,37 @@ function toggleOptional(host, r){
   rr.insertNode(span); placeCaret(span);
   saveEdChange('Marcado como paso opcional');
 }
-function saveEdChange(msg){ updateDetected(); if(msg) toast(msg); }
+function saveEdChange(msg){ document.querySelectorAll('.ed-text').forEach(ensureCaretSlots); updateDetected(); if(msg) toast(msg); }
+/* Backspace / Delete next to a chip: skip the invisible caret slot and remove the chip in one keystroke */
+document.addEventListener('keydown', ev=>{
+  if(ev.key!=='Backspace' && ev.key!=='Delete') return;
+  const host=ev.target.closest && ev.target.closest('.ed-text'); if(!host || ED.adv) return;
+  const sel=getSelection(); if(!sel.rangeCount || !sel.isCollapsed) return;
+  const back=ev.key==='Backspace';
+  let n=sel.anchorNode, o=sel.anchorOffset, touched=false;
+  if(n.nodeType===3){
+    if(back){ while(o>0 && n.nodeValue[o-1]===ZW){ n.deleteData(o-1,1); o--; touched=true; } }
+    else { while(o<n.nodeValue.length && n.nodeValue[o]===ZW){ n.deleteData(o,1); touched=true; } }
+  }
+  const nb = n.nodeType===3
+    ? (back ? (o===0 ? n.previousSibling : null) : (o===n.nodeValue.length ? n.nextSibling : null))
+    : (back ? n.childNodes[o-1] : n.childNodes[o]);
+  if(nb && nb.nodeType===1 && nb.classList.contains('chip-f')){
+    ev.preventDefault(); const anchor = back ? nb.previousSibling : nb.nextSibling; nb.remove();
+    const r=document.createRange();
+    if(n.nodeType===3 && n.isConnected){ r.setStart(n, Math.min(o, n.nodeValue.length)); }
+    else if(anchor){ anchor.nodeType===3 ? r.setStart(anchor, back?anchor.nodeValue.length:0) : (back ? r.setStartAfter(anchor) : r.setStartBefore(anchor)); }
+    else r.setStart(host, 0);
+    r.collapse(true); sel.removeAllRanges(); sel.addRange(r);
+    ensureCaretSlots(host); updateDetected(); return;
+  }
+  if(touched){
+    ev.preventDefault();
+    const r=document.createRange(); r.setStart(n,o); r.collapse(true); sel.removeAllRanges(); sel.addRange(r);
+    document.execCommand(back?'delete':'forwardDelete');
+    ensureCaretSlots(host); updateDetected();
+  }
+});
 
 /* ---------- field dialog ---------- */
 function optRow(v=''){ return `<div class="opt-row"><span class="n"></span><input class="inp" value="${esc(v)}" placeholder="Escribe una opción"><button type="button" class="btn sm ghost icon-btn" data-dlg="rm" title="Quitar esta opción" aria-label="Quitar esta opción">${ico('trash')}</button></div>`; }
@@ -1419,7 +1460,8 @@ function dlgOk(){
   if(cfg.chip){ cfg.chip.replaceWith(chip); }
   else { const r=cfg.range; r.deleteContents(); r.insertNode(chip); }
   closeDialog(false);
-  cfg.host.focus({preventScroll:true}); placeCaret(chip);
+  ensureCaretSlots(cfg.host);
+  cfg.host.focus({preventScroll:true}); placeCaret(chip.nextSibling||chip);
   saveEdChange(cfg.chip?'Campo actualizado':'Campo añadido');
 }
 function dlgDelete(){
@@ -1442,6 +1484,7 @@ document.addEventListener('click', ev=>{
   if(tool){ edTool(tool.dataset.tool, tool.dataset.part); return; }
   const chip=t.closest && t.closest('.ed-text .chip-f');
   if(chip){
+    const sl=getSelection(); if(sl && !sl.isCollapsed && sl.toString().replace(/\u200b/g,'').trim()) return;   /* the user was selecting text, not opening the field */
     let opts=[]; try{ opts=JSON.parse(chip.dataset.opts||'[]'); }catch{}
     openFieldDialog({kind:chip.dataset.kind, label:chip.dataset.label, opts, chip, host:chip.closest('.ed-text'), range:null});
     return;
@@ -1478,7 +1521,8 @@ document.addEventListener('paste', ev=>{
   const sel=getSelection(); if(!sel.rangeCount) return; const r=sel.getRangeAt(0); r.deleteContents();
   const tpl=document.createElement('template'); tpl.innerHTML=edHTML(text);
   const last=tpl.content.lastChild; r.insertNode(tpl.content);
-  if(last) placeCaret(last);
+  ensureCaretSlots(host);
+  if(last) placeCaret(last.isConnected && last.nextSibling && last.nextSibling.nodeValue===ZW ? last.nextSibling : last);
   updateDetected();
 });
 async function submitEditor(e){
@@ -1736,7 +1780,8 @@ document.addEventListener('input', ev=>{
   if(t.closest && t.closest('#matList')){ const row=t.closest('.mat-row'); if(row) matRowSync(row); if(t.classList.contains('mat-n')) matFit(); saveDocs(); return; }
   if(t.id==='hmQ'){ homeQ=t.value; homeSel=0; updateHomeResults(); return; }
   if(t.id==='q'){ state.q=t.value; renderList(); return; }
-  if(t.id==='ed-body'||t.id==='ed-recs'||(t.classList&&t.classList.contains('code'))){ updateDetected(); $('#edErr').textContent=''; return; }
+  if(t.classList && t.classList.contains('ed-text')) ensureCaretSlots(t);
+  if(t.id==='ed-body'||t.id==='ed-recs'||t.id==='ed-mat'||(t.classList&&t.classList.contains('code'))){ updateDetected(); $('#edErr').textContent=''; return; }
   if(t.id==='ed-title'){ $('#edErr').textContent=''; return; }
   if(t.id==='imp-text') updateImportPreview();
 });
