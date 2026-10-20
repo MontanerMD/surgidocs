@@ -200,6 +200,15 @@ body.mat-dragging,body.mat-dragging *{cursor:grabbing!important;user-select:none
 .mat-flag[aria-pressed="true"]{background:var(--warn-soft,#fef3c7);color:var(--warn,#b45309)}
 .mat-duda{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;background:var(--warn-soft,#fef3c7);color:var(--warn,#b45309);font-size:11px;font-weight:800;vertical-align:1px;margin-left:4px}
 .mat-row.duda .mat-n{font-style:italic}
+.mat-sec{display:flex;align-items:center;gap:8px;padding:14px 8px 6px;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.mat-sec:first-child{padding-top:4px}
+.mat-sec span{flex:1}
+.mat-sec-add{border:0;background:none;font:inherit;font-size:11.5px;font-weight:600;letter-spacing:0;text-transform:none;color:var(--faint);padding:3px 8px;border-radius:7px;cursor:pointer;opacity:.7}
+.mat-sec:hover .mat-sec-add,.mat-sec-add:focus-visible{opacity:1}
+.mat-sec-add:hover{background:var(--sunk);color:var(--ink)}
+.mat-sec.empty::after{content:"Vacío";font-size:11.5px;font-weight:500;letter-spacing:0;text-transform:none;color:var(--line2);order:-1;flex:none;margin-left:0}
+.mat-sec + .mat-row{border-top:0!important}
+.crumbs .appr{font-weight:600;color:var(--ink2)}
 .mat-foot{display:flex;align-items:center;gap:8px;margin-top:8px;padding:0 4px}
 .mat-foot .mat-add{margin:0}
 .mat-foot .sp{flex:1}
@@ -596,60 +605,124 @@ function splitRecs(text){
 const allText = o => (o.body||'') + '\n' + (o.mat||'') + '\n' + (o.recs||'');
 const hasMatBox = o => o.type==='quirurgica' || !!(o.mat&&o.mat.trim());
 /* material: one slot per line; optional default quantity as trailing «x2» */
+/* ---------- surgical approach + material by sections ---------- */
+const APPROACHES = {abierta:'Abierta', laparoscopica:'Laparoscópica', robotica:'Robótica'};
+const approachOf = o => o && o.type==='quirurgica' ? (APPROACHES[o.approach] ? o.approach : 'abierta') : (APPROACHES[o&&o.approach] ? o.approach : '');
+const MAT_SECTIONS = {
+  laparoscopica:['TRÓCARES','ÓPTICA','INSTRUMENTAL','GRAPADORAS Y CLIPS','SUTURAS','DRENAJES','OTROS'],
+  robotica:['TRÓCARES','ÓPTICA','INSTRUMENTAL ROBÓTICO','GRAPADORAS Y CLIPS','SUTURAS','DRENAJES','OTROS'],
+  abierta:['INSTRUMENTAL','GRAPADORAS Y CLIPS','SUTURAS','DRENAJES','OTROS']
+};
+const MAT_RULES = [
+  ['TRÓCARES', /trocar|hasson|\bpuerto/],
+  ['ÓPTICA', /optica|insuflador|camara|fuente de luz|neumoperitoneo|torre/],
+  ['SUTURAS', /sutura|monomax|\bseda\b|vicryl|\bpds\b|prolene|monocryl|nylon|polipropileno|ethibond|v-?loc|stratafix|grapadora de piel|\bhilo|\bpunto/],
+  ['GRAPADORAS Y CLIPS', /endo ?gia|grapadora|endograpadora|\bclip|hem-?o-?lok|\blazo|surgitie|endoloop|\bcarga|echelon|signia|tri-?staple/],
+  ['DRENAJES', /drenaje|penrose|blake|jackson|redon|pleur|sonda/],
+  ['INSTRUMENTAL', /pinza|tijera|disector|maryland|canula|aspiracion|separador|bisturi|bipolar|monopolar|ligasure|harmonic|ultracision|thunderbeat|electro|portaagujas|retractor|gancho|valva|instrumental|caja/]
+];
+const isMatHead = l => /^[A-ZÁÉÍÓÚÜÑ][A-ZÁÉÍÓÚÜÑ0-9 ,./()+-]{1,40}:$/.test(l);
+function classifyMat(name, appr){
+  const n=norm(name);
+  for(const [sec,re] of MAT_RULES){ if(re.test(n)) return sec==='INSTRUMENTAL' && appr==='robotica' ? 'INSTRUMENTAL ROBÓTICO' : sec; }
+  return 'OTROS';
+}
 function parseMat(src){
-  return String(src||'').split('\n').map(l=>l.replace(/^\s*(?:[-•*·]\s*)?/,'').replace(/\s+$/,'')).filter(Boolean).map(l=>{
+  const out=[]; let sec;
+  String(src||'').split('\n').map(l=>l.replace(/^\s*(?:[-•*·]\s*)?/,'').replace(/\s+$/,'')).filter(Boolean).forEach(l=>{
+    if(isMatHead(l)){ sec=l.slice(0,-1).trim(); return; }
     let n=l, q='', d=false, m;
     for(let k=0;k<2;k++){
       if((m=n.match(/^(.*?)\s*\(?\?\)?$/)) && m[1]){ d=true; n=m[1]; }
       if(!q && (m=n.match(/^(.*?)\s+[x×]\s*(\d{1,3})$/i)) && m[1]){ q=m[2]; n=m[1]; }
     }
-    return {n, q, d};
+    out.push(sec!==undefined ? {n,q,d,s:sec} : {n,q,d});
   });
+  return out;
+}
+/* ordered sections for a template: defaults of its approach + any extra headings used */
+function matGroups(rows, appr){
+  const defs=MAT_SECTIONS[appr]||[];
+  rows.forEach(r=>{ if(r.s===undefined && defs.length) r.s=classifyMat(r.n, appr); });
+  rows.forEach(r=>{ if(appr==='robotica' && r.s==='INSTRUMENTAL') r.s='INSTRUMENTAL ROBÓTICO'; else if(appr && appr!=='robotica' && r.s==='INSTRUMENTAL ROBÓTICO') r.s='INSTRUMENTAL'; });
+  if(!defs.length && rows.every(r=>!r.s)) return [{s:'', rows}];
+  const order=[...defs];
+  rows.forEach(r=>{ const k=r.s||'OTROS'; if(!order.includes(k)){ const i=order.indexOf('OTROS'); i<0?order.push(k):order.splice(i,0,k); } });
+  return order.map(k=>({s:k, rows:rows.filter(r=>(r.s||'OTROS')===k)}));
 }
 const matLine = r => `${r.n}${Number(r.q)>0?` x${Number(r.q)}`:''}${r.d?' ?':''}`;
-const matSource = rows => rows.filter(r=>r.n).map(matLine).join('\n');
+function matSource(rows){
+  const named=rows.filter(r=>r.n);
+  if(named.every(r=>!r.s)) return named.map(matLine).join('\n');
+  const keys=[]; named.forEach(r=>{ if(!keys.includes(r.s||'OTROS')) keys.push(r.s||'OTROS'); });
+  return keys.map(k=>`${k}:\n`+named.filter(r=>(r.s||'OTROS')===k).map(matLine).join('\n')).join('\n\n');
+}
 const DUDA = `<span class="mat-duda" title="Dudoso: abrir solo si hace falta">?</span>`;
 function matRowHTML(r){
   const on=Number(r.q)>0, cls=`mat-row${on?' on':''}${r.d?' duda':''}`;
   if(!state.canWrite) return `<div class="${cls}" data-d="${r.d?1:''}"><span class="mat-q ro" data-q="${esc(r.q||'')}">${on?esc(String(Number(r.q))):'–'}</span><span class="mat-n ro" data-n="${esc(r.n||'')}">${esc(r.n||'')}${r.d?' '+DUDA:''}</span><span></span></div>`;
-  return `<div class="${cls}" data-d="${r.d?1:''}"><span class="mat-drag" title="Arrastra para cambiar el orden (o Alt + ↑/↓)" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="9" cy="6" r="1.4"/><circle cx="15" cy="6" r="1.4"/><circle cx="9" cy="12" r="1.4"/><circle cx="15" cy="12" r="1.4"/><circle cx="9" cy="18" r="1.4"/><circle cx="15" cy="18" r="1.4"/></svg></span><span class="mat-q"><button type="button" data-action="mat-dec" aria-label="Uno menos" tabindex="-1">−</button><input type="number" inputmode="numeric" min="0" max="999" value="${esc(r.q||'')}" placeholder="–" aria-label="Cantidad de ${esc(r.n||'material')}"><button type="button" data-action="mat-inc" aria-label="Uno más" tabindex="-1">+</button></span><textarea class="mat-n" rows="1" placeholder="Nombre del material" aria-label="Material" spellcheck="true">${esc(r.n||'')}</textarea><span class="mat-acts"><button type="button" class="mat-flag" data-action="mat-flag" aria-pressed="${!!r.d}" title="${r.d?'Quitar la duda':'Marcar como dudoso: abrir solo si hace falta'}" aria-label="Material dudoso">?</button><button type="button" class="mat-del" data-action="mat-del" aria-label="Quitar este material" title="Quitar">×</button></span></div>`;
+  return `<div class="${cls}" data-d="${r.d?1:''}"><span class="mat-drag" title="Arrastra para cambiar el orden o el apartado (o Alt + ↑/↓)" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="9" cy="6" r="1.4"/><circle cx="15" cy="6" r="1.4"/><circle cx="9" cy="12" r="1.4"/><circle cx="15" cy="12" r="1.4"/><circle cx="9" cy="18" r="1.4"/><circle cx="15" cy="18" r="1.4"/></svg></span><span class="mat-q"><button type="button" data-action="mat-dec" aria-label="Uno menos" tabindex="-1">−</button><input type="number" inputmode="numeric" min="0" max="999" value="${esc(r.q||'')}" placeholder="–" aria-label="Cantidad de ${esc(r.n||'material')}"><button type="button" data-action="mat-inc" aria-label="Uno más" tabindex="-1">+</button></span><textarea class="mat-n" rows="1" placeholder="Nombre del material" aria-label="Material" spellcheck="true">${esc(r.n||'')}</textarea><span class="mat-acts"><button type="button" class="mat-flag" data-action="mat-flag" aria-pressed="${!!r.d}" title="${r.d?'Quitar la duda':'Marcar como dudoso: abrir solo si hace falta'}" aria-label="Material dudoso">?</button><button type="button" class="mat-del" data-action="mat-del" aria-label="Quitar este material" title="Quitar">×</button></span></div>`;
 }
+const secLabel = k => k.charAt(0)+k.slice(1).toLowerCase();
+function matSecHTML(k){ return `<div class="mat-sec" data-s="${esc(k)}"><span>${esc(secLabel(k))}</span>${state.canWrite?`<button type="button" class="mat-sec-add" data-action="mat-add" title="Añadir material en ${esc(secLabel(k))}">+ Añadir</button>`:''}</div>`; }
 function renderMat(rows){
   const box=$('#matList'); if(!box) return;
   setTimeout(matFit,0);
-  const w=state.canWrite;
-  box.innerHTML=(rows.length?rows.map(matRowHTML).join(''):`<div class="mat-empty">Esta plantilla aún no tiene material.${w?' Añádelo aquí o al editar la plantilla.':' Para añadirlo, activa la edición.'}</div>`)+(w?`<div class="mat-foot"><button type="button" class="mat-add" data-action="mat-add">+ Añadir material</button><span class="sp"></span><button type="button" class="btn sm" id="matSave" data-action="mat-save" hidden>${ico('check')}Guardar en la plantilla</button></div>`:'');
-  matSummary();
-  const h=$('#matHint'); if(h) h.innerHTML= w ? `Pon la cantidad en cada material usado; solo se copian los que tienen número. Pulsa <b>?</b> en los que no siempre se abren. Arrastra <span class="mat-drag-i">⠿</span> para cambiar el orden.` : 'Solo se copian los materiales con número. Para cambiar el material o las cantidades, activa la edición.';
+  const w=state.canWrite, o=state.items.get(state.currentId);
+  const groups=matGroups(rows.map(r=>({...r})), approachOf(o));
+  const flat=groups.length===1 && !groups[0].s;
+  let html='';
+  if(flat){ html=groups[0].rows.map(matRowHTML).join(''); if(!rows.length) html=`<div class="mat-empty">Esta plantilla aún no tiene material.${w?' Añádelo aquí o al editar la plantilla.':' Para añadirlo, activa la edición.'}</div>`; }
+  else html=groups.filter(g=>w||g.rows.length).map(g=>matSecHTML(g.s)+g.rows.map(matRowHTML).join('')).join('') || `<div class="mat-empty">Esta plantilla aún no tiene material. Para añadirlo, activa la edición.</div>`;
+  box.innerHTML=html+(w?`<div class="mat-foot">${flat?`<button type="button" class="mat-add" data-action="mat-add">+ Añadir material</button>`:''}<span class="sp"></span><button type="button" class="btn sm" id="matSave" data-action="mat-save" hidden>${ico('check')}Guardar en la plantilla</button></div>`:'');
+  matSecSync(); matSummary();
+  const h=$('#matHint'); if(h) h.innerHTML= w ? `Pon la cantidad en cada material usado; solo se copian los que tienen número. Pulsa <b>?</b> en los que no siempre se abren. Arrastra <span class="mat-drag-i">⠿</span> para cambiar el orden o el apartado.` : 'Solo se copian los materiales con número. Para cambiar el material o las cantidades, activa la edición.';
 }
-function readMat(){ return [...document.querySelectorAll('#matList .mat-row')].map(r=>({q:(()=>{ const i=r.querySelector('.mat-q input'); return (i?i.value:(r.querySelector('.mat-q').dataset.q||'')).trim(); })(), n:(()=>{ const e=r.querySelector('.mat-n'); return (e.tagName==='TEXTAREA'?e.value:(e.dataset.n||'')).trim(); })(), d:r.dataset.d==='1'})); }
+function matSecSync(){ document.querySelectorAll('#matList .mat-sec').forEach(h=>{ const nx=h.nextElementSibling; h.classList.toggle('empty', !(nx && nx.classList.contains('mat-row'))); }); }
+function readMat(){
+  let sec; const out=[];
+  [...document.querySelectorAll('#matList > .mat-sec, #matList > .mat-row')].forEach(el=>{
+    if(el.classList.contains('mat-sec')){ sec=el.dataset.s; return; }
+    const i=el.querySelector('.mat-q input'), e=el.querySelector('.mat-n');
+    const r={q:(i?i.value:(el.querySelector('.mat-q').dataset.q||'')).trim(), n:(e.tagName==='TEXTAREA'?e.value:(e.dataset.n||'')).trim(), d:el.dataset.d==='1'};
+    if(sec!==undefined) r.s=sec; out.push(r);
+  });
+  return out;
+}
 function matSummary(){
   const el=$('#matSum'); if(!el) return; const r=readMat().filter(x=>x.n); const on=r.filter(x=>Number(x.q)>0).length, du=r.filter(x=>x.d).length;
   el.textContent = r.length ? `· ${on} de ${r.length} con cantidad${du?` · ${du} dudoso${du===1?'':'s'}`:''}` : '· vacío';
   const sv=$('#matSave'); const o=state.items.get(state.currentId);
-  if(sv && o) sv.hidden = !state.canWrite || matSource(r)===matSource(parseMat(o.mat));
+  if(sv && o){ const base=matGroups(parseMat(o.mat), approachOf(o)).flatMap(g=>g.rows); sv.hidden = !state.canWrite || matSource(r)===matSource(base); }
 }
-function matText(){ return readMat().filter(r=>r.n && Number(r.q)>0).map(r=>`- ${r.n} x${Number(r.q)}${r.d?' (?)':''}`).join('\n'); }
+function matText(){
+  const r=readMat().filter(x=>x.n && Number(x.q)>0); const line=x=>`- ${x.n} x${Number(x.q)}${x.d?' (?)':''}`;
+  if(r.every(x=>!x.s)) return r.map(line).join('\n');
+  const keys=[]; r.forEach(x=>{ if(!keys.includes(x.s)) keys.push(x.s); });
+  return keys.map(k=>`${k}:\n`+r.filter(x=>x.s===k).map(line).join('\n')).join('\n\n');
+}
 function matRowSync(row){ const i=row.querySelector('.mat-q input'); if(i) row.classList.toggle('on', Number(i.value)>0); matSummary(); }
 function matFit(){ if(CSS.supports && CSS.supports('field-sizing','content')) return; document.querySelectorAll('#matList textarea.mat-n').forEach(t=>{ t.style.height='auto'; t.style.height=t.scrollHeight+'px'; }); }
-/* drag & drop reordering (mouse and touch) */
+/* drag & drop reordering (mouse and touch), also across sections */
 let MATDRAG=null;
 document.addEventListener('pointerdown', ev=>{
   const h=ev.target.closest && ev.target.closest('.mat-drag'); if(!h || !state.canWrite) return;
   const row=h.closest('.mat-row'); if(!row) return;
   ev.preventDefault(); h.setPointerCapture && h.setPointerCapture(ev.pointerId);
-  MATDRAG={row, h, y0:ev.clientY}; row.classList.add('dragging'); document.body.classList.add('mat-dragging');
+  MATDRAG={row}; row.classList.add('dragging'); document.body.classList.add('mat-dragging');
 });
 document.addEventListener('pointermove', ev=>{
   if(!MATDRAG) return; ev.preventDefault();
   const {row}=MATDRAG, list=row.parentElement;
-  const rows=[...list.querySelectorAll('.mat-row')].filter(r=>r!==row);
+  const els=[...list.querySelectorAll(':scope > .mat-row, :scope > .mat-sec')].filter(r=>r!==row);
   let before=null;
-  for(const r of rows){ const b=r.getBoundingClientRect(); if(ev.clientY < b.top+b.height/2){ before=r; break; } }
+  for(const r of els){ const b=r.getBoundingClientRect(); if(ev.clientY < b.top+b.height/2){ before=r; break; } }
+  if(before && before===els[0] && before.classList.contains('mat-sec')){ before=els[1]||null; if(!before){ els[0].after(row); return; } }
   if(before){ if(before!==row.nextElementSibling) list.insertBefore(row, before); }
-  else { const last=rows[rows.length-1]; if(last && last.nextElementSibling!==row) last.after(row); }
+  else { const last=els[els.length-1]; if(last && last.nextElementSibling!==row) last.after(row); }
+  matSecSync();
 });
-const endDrag=()=>{ if(!MATDRAG) return; MATDRAG.row.classList.remove('dragging'); document.body.classList.remove('mat-dragging'); MATDRAG=null; matSummary(); saveDocs(); };
+const endDrag=()=>{ if(!MATDRAG) return; MATDRAG.row.classList.remove('dragging'); document.body.classList.remove('mat-dragging'); MATDRAG=null; matSecSync(); matSummary(); saveDocs(); };
 document.addEventListener('pointerup', endDrag); document.addEventListener('pointercancel', endDrag);
 function joinMulti(arr){ if(!arr||!arr.length) return ''; if(arr.length===1) return arr[0]; return arr.slice(0,-1).join(', ')+' y '+arr[arr.length-1]; }
 function fillGap(f, s, vals){
@@ -752,7 +825,7 @@ function filtered(){
   if(state.type==='fav') arr=arr.filter(o=>o.fav);
   else if(state.type!=='all') arr=arr.filter(o=>o.type===state.type);
   if(state.section!=='all') arr=arr.filter(o=>o.section===state.section);
-  if(q){ const words=q.split(/\s+/); arr=arr.filter(o=>{ const hay=norm([o.title,(o.tags||[]).join(' '),o.section,TYPES[o.type]?.label,o.body,o.mat,o.recs].join(' ')); return words.every(w=>hay.includes(w)); }); }
+  if(q){ const words=q.split(/\s+/); arr=arr.filter(o=>{ const hay=norm([o.title,(o.tags||[]).join(' '),o.section,TYPES[o.type]?.label,APPROACHES[o.approach]||'',o.body,o.mat,o.recs].join(' ')); return words.every(w=>hay.includes(w)); }); }
   const by={
     recent:(a,b)=>String(b.updatedAt||'').localeCompare(String(a.updatedAt||'')),
     used:(a,b)=>(b.uses||0)-(a.uses||0) || a.title.localeCompare(b.title,'es'),
@@ -878,7 +951,7 @@ function renderWelcome(){
 function syntaxHelp(){
   return `<p class="syntax"><b>Cómo se escriben los campos.</b> <code>{{Edad}}</code> hueco de texto · <code>{{Lado: derecha | izquierda}}</code> opciones · <code>{{Hallazgos*: a | b | c}}</code> varias opciones · <code>{{Fiebre: Afebril | Fiebre de … ºC}}</code> la opción con «…» abre un hueco · <code>{{Fecha}}</code> calendario · <code>[[- Drenaje de Penrose…]]</code> paso opcional, solo se copia si se marca. Un mismo nombre de campo se rellena una sola vez.</p>`;
 }
-function detailSig(o){ return [o.id,o.title,o.type,o.section,(o.tags||[]).join(','),o.body,o.mat,o.recs,o.fav,o.updatedAt].join('|'); }
+function detailSig(o){ return [o.id,o.title,o.type,o.section,(o.tags||[]).join(','),o.approach,o.body,o.mat,o.recs,o.fav,o.updatedAt].join('|'); }
 const contentSig = o => (o.body||'')+'\u0001'+(o.recs||'')+'\u0001'+(o.mat||'');
 let FMAP = {};   /* fields of the open template, by key */
 
@@ -932,7 +1005,7 @@ function renderDetail(o){
   $('#main').innerHTML=`<div class="page" id="docPage"><div class="page-in doc-page">
     <button class="back" data-action="home">${ico('back')}Plantillas</button>
     <header class="form-head t-${esc(o.type)}">
-      <div class="crumbs"><span class="dot"></span><span>${esc(TYPES[o.type]?.label||'')}</span><span class="sep">/</span><span title="${esc(SEC_NAMES[o.section]||'')}">${esc(o.section||'General')}</span>${tags}</div>
+      <div class="crumbs"><span class="dot"></span><span>${esc(TYPES[o.type]?.label||'')}</span><span class="sep">/</span><span title="${esc(SEC_NAMES[o.section]||'')}">${esc(o.section||'General')}</span>${approachOf(o)?`<span class="sep">/</span><span class="appr">${APPROACHES[approachOf(o)]}</span>`:''}${tags}</div>
       <h1>${esc(o.title)}</h1>
       <div class="doc-actions">
         ${w?`<button class="btn sm fav" data-action="fav" aria-pressed="${!!o.fav}">${ico('star', o.fav?'filled':'')}Favorita</button>
@@ -1168,7 +1241,7 @@ function edBlock(part, title, src, hint){
       <button type="button" class="tool" data-tool="date" data-part="${part}" title="Una fecha"><span class="sw k-date"></span>Fecha</button>
       <button type="button" class="tool" data-tool="opt" data-part="${part}" title="Un paso que solo se copia si lo incluyes"><span class="sw k-opt"></span><span class="lbl-opt">Paso opcional</span></button>
     </div>
-    <div class="ed-text" id="ed-${part}" data-part="${part}" spellcheck="true" role="textbox" aria-multiline="true" aria-label="${title}" data-ph="${part==='body'?'Escribe o pega aquí el texto de la plantilla, tal como quieres que se copie.':part==='mat'?'Un material por línea, por ejemplo:\nTrócar de 5 mm x2\nEndobolsa x1\nPenrose\n(«x2» al final = cantidad ya puesta; sin número, se rellena en cada paciente; «?» al final = dudoso, abrir solo si hace falta)':'Opcional. Escribe o pega las recomendaciones para el paciente.'}">${edHTML(src)}</div>
+    <div class="ed-text" id="ed-${part}" data-part="${part}" spellcheck="true" role="textbox" aria-multiline="true" aria-label="${title}" data-ph="${part==='body'?'Escribe o pega aquí el texto de la plantilla, tal como quieres que se copie.':part==='mat'?'Un material por línea. Los títulos en mayúsculas con dos puntos («SUTURAS:») crean apartados; si no pones ninguno, se reparten solos según el abordaje. Por ejemplo:\nTrócar de 5 mm x2\nEndobolsa x1\nPenrose\n(«x2» al final = cantidad ya puesta; sin número, se rellena en cada paciente; «?» al final = dudoso, abrir solo si hace falta)':'Opcional. Escribe o pega las recomendaciones para el paciente.'}">${edHTML(src)}</div>
     <textarea class="inp body code" id="ed-${part}-code" spellcheck="false" hidden></textarea>
   </section>`;
 }
@@ -1184,6 +1257,9 @@ function renderEditor(o){
         <div class="f wide"><label for="ed-title">Nombre de la plantilla</label><input class="inp" id="ed-title" value="${esc(d.title)}" placeholder="Ej.: Sigmoidectomía laparoscópica" required></div>
         <div class="f wide"><span class="lbl">Tipo</span><div class="seg" role="radiogroup" aria-label="Tipo">
           ${Object.entries(TYPES).map(([k,t])=>`<input type="radio" name="ed-type" id="ed-type-${k}" value="${k}" ${d.type===k?'checked':''}><label for="ed-type-${k}">${t.label}</label>`).join('')}
+        </div></div>
+        <div class="f wide" id="ed-appr-wrap" ${d.type==='quirurgica'?'':'hidden'}><span class="lbl">Abordaje</span><div class="seg" role="radiogroup" aria-label="Abordaje">
+          ${Object.entries(APPROACHES).map(([k,l])=>`<input type="radio" name="ed-appr" id="ed-appr-${k}" value="${k}" ${approachOf({...d,type:'quirurgica'})===k?'checked':''}><label for="ed-appr-${k}">${l}</label>`).join('')}
         </div></div>
         <div class="f"><label for="ed-section">Sección</label><select class="inp" id="ed-section">${SECTIONS.map(s=>`<option value="${s}" ${d.section===s?'selected':''}>${s} — ${esc(SEC_NAMES[s])}</option>`).join('')}</select></div>
         <div class="f"><label for="ed-tags">Etiquetas <span class="multi">· opcional, para encontrarla al buscar</span></label><input class="inp" id="ed-tags" value="${esc((d.tags||[]).join(', '))}" placeholder="colon, laparoscopia"></div>
@@ -1405,10 +1481,11 @@ async function submitEditor(e){
   if(!title){ err.textContent='Falta el nombre de la plantilla.'; $('#ed-title').focus(); return; }
   if(!body.trim()){ err.textContent='El texto del informe está vacío.'; (ED.adv?$('#ed-body-code'):$('#ed-body')).focus(); return; }
   const type=document.querySelector('input[name="ed-type"]:checked')?.value||'quirurgica';
+  const approach=type==='quirurgica' ? (document.querySelector('input[name="ed-appr"]:checked')?.value||'abierta') : '';
   const section=$('#ed-section').value;
   const tags=$('#ed-tags').value.split(',').map(s=>s.trim()).filter(Boolean);
   const prev=state.currentId?state.items.get(state.currentId):null;
-  const o={ id:prev?prev.id:newId(), title, type, section, tags, body, mat, recs, fav:prev?!!prev.fav:false, uses:prev?prev.uses||0:0, createdAt:prev?prev.createdAt||nowISO():nowISO(), updatedAt:nowISO() };
+  const o={ id:prev?prev.id:newId(), title, type, approach, section, tags, body, mat, recs, fav:prev?!!prev.fav:false, uses:prev?prev.uses||0:0, createdAt:prev?prev.createdAt||nowISO():nowISO(), updatedAt:nowISO() };
   const btn=e.submitter; if(btn) btn.disabled=true;
   try{ await saveItem(o); delete state.docs[o.id]; toast(prev?'Cambios guardados':'Plantilla creada'); go('detail',o.id); }
   catch(x){ err.textContent=dbErr(x); if(btn) btn.disabled=false; }
@@ -1602,8 +1679,8 @@ document.addEventListener('click', async ev=>{
       catch(x){ toast(dbErr(x)); } finally{ b.disabled=false; }
       break; }
     case 'mat-inc': case 'mat-dec': { if(!state.canWrite) break; const row=b.closest('.mat-row'), i=row.querySelector('.mat-q input'); const v=Math.max(0,Math.min(999,(Number(i.value)||0)+(b.dataset.action==='mat-inc'?1:-1))); i.value=v?String(v):''; matRowSync(row); saveDocs(); break; }
-    case 'mat-del': { if(!state.canWrite) break; const row=b.closest('.mat-row'); const nx=row.nextElementSibling; row.remove(); if(!document.querySelector('#matList .mat-row')) renderMat([]); matSummary(); saveDocs(); const f=nx&&nx.querySelector&&nx.querySelector('.mat-n'); if(f) f.focus(); break; }
-    case 'mat-add': { if(!state.canWrite) break; const box=$('#matList'); const em=box.querySelector('.mat-empty'); if(em) em.remove(); const foot=b.closest('.mat-foot')||b; foot.insertAdjacentHTML('beforebegin', matRowHTML({n:'',q:'1'})); const row=foot.previousElementSibling; row.querySelector('.mat-n').focus(); matSummary(); saveDocs(); break; }
+    case 'mat-del': { if(!state.canWrite) break; const row=b.closest('.mat-row'); const nx=row.nextElementSibling; row.remove(); if(!document.querySelector('#matList .mat-row') && !document.querySelector('#matList .mat-sec')) renderMat([]); matSecSync(); matSummary(); saveDocs(); const f=nx&&nx.querySelector&&nx.querySelector('.mat-n'); if(f) f.focus(); break; }
+    case 'mat-add': { if(!state.canWrite) break; const box=$('#matList'); const em=box.querySelector('.mat-empty'); if(em) em.remove(); const sec=b.closest('.mat-sec'); let anchor; if(sec){ let x=sec; while(x.nextElementSibling && x.nextElementSibling.classList.contains('mat-row')) x=x.nextElementSibling; x.insertAdjacentHTML('afterend', matRowHTML({n:'',q:'1'})); anchor=x.nextElementSibling; } else { const foot=b.closest('.mat-foot')||b; foot.insertAdjacentHTML('beforebegin', matRowHTML({n:'',q:'1'})); anchor=foot.previousElementSibling; } const row=anchor; matSecSync(); row.querySelector('.mat-n').focus(); matSummary(); saveDocs(); break; }
     case 'ins': insertAtCursor(b.dataset.v,b.dataset.sel); break;
     case 'del': {
       if(!b.classList.contains('armed')){ b.classList.add('armed'); b.innerHTML=`${ico('trash')}Pulsa otra vez para borrar`; break; }
@@ -1658,6 +1735,7 @@ document.addEventListener('change', ev=>{
   const t=ev.target;
   if(t.id==='sort'){ state.sort=t.value; try{ localStorage.setItem('plantillario.sort',t.value); }catch{} renderList(); }
   if(t.id==='imp-type'||t.id==='imp-sec') updateImportPreview();
+  if(t.name==='ed-type'){ const w=$('#ed-appr-wrap'); if(w) w.hidden = t.value!=='quirurgica'; }
   if(t.id==='imp-file' && t.files && t.files[0]){ const r=new FileReader(); r.onload=()=>{ $('#imp-text').value=String(r.result||''); updateImportPreview(); }; r.readAsText(t.files[0]); }
 });
 document.addEventListener('focusin', ev=>{
@@ -1686,7 +1764,7 @@ document.addEventListener('keydown', ev=>{
   if(mod && ev.key==='Enter' && state.view==='detail'){ ev.preventDefault(); copyPart(ev.shiftKey?'recs':'body'); return; }
   const inDoc = ev.target.closest && ev.target.closest('.doc-text');
   if(inDoc && ev.key==='Tab'){ ev.preventDefault(); nextHole(ev.shiftKey?-1:1); return; }
-  if(state.canWrite && ev.altKey && (ev.key==='ArrowUp'||ev.key==='ArrowDown') && ev.target.closest && ev.target.closest('#matList .mat-row')){ ev.preventDefault(); const row=ev.target.closest('.mat-row'); const sib=ev.key==='ArrowUp'?row.previousElementSibling:row.nextElementSibling; if(sib && sib.classList.contains('mat-row')){ if(ev.key==='ArrowUp') sib.before(row); else sib.after(row); ev.target.focus(); matSummary(); saveDocs(); } return; }
+  if(state.canWrite && ev.altKey && (ev.key==='ArrowUp'||ev.key==='ArrowDown') && ev.target.closest && ev.target.closest('#matList .mat-row')){ ev.preventDefault(); const row=ev.target.closest('.mat-row'); const sib=ev.key==='ArrowUp'?row.previousElementSibling:row.nextElementSibling; const ok=sib && (sib.classList.contains('mat-row') || (sib.classList.contains('mat-sec') && (ev.key==='ArrowDown' || sib.previousElementSibling))); if(ok){ if(ev.key==='ArrowUp') sib.before(row); else sib.after(row); ev.target.focus(); matSecSync(); matSummary(); saveDocs(); } return; }
   if(state.canWrite && ev.target.classList && ev.target.classList.contains('mat-n') && ev.key==='Enter'){ ev.preventDefault(); const row=ev.target.closest('.mat-row'); row.insertAdjacentHTML('afterend', matRowHTML({n:'',q:'1'})); row.nextElementSibling.querySelector('.mat-n').focus(); saveDocs(); return; }
   if(ev.target.id==='hmQ'){
     const r=homeMatches();
