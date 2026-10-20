@@ -10,6 +10,8 @@
  *   - una variable secreta EDIT_KEY con la contraseña de edición
  * Si el KV está vacío, sirve las plantillas iniciales de /plantillas.json.
  */
+import { MIGRATIONS } from '../_lib/migrations.js';
+
 const KEY = 'data';
 const PREV = 'data:prev';
 const TYPES = ['urgencias', 'quirurgica', 'consulta', 'comun'];
@@ -21,7 +23,19 @@ const json = (obj, status = 200) => new Response(JSON.stringify(obj), {
 
 async function load(env, request) {
   const stored = await env.PLANTILLAS.get(KEY, 'json');
-  if (stored && stored.items) return stored;
+  if (stored && stored.items) {
+    const done = Array.isArray(stored.migrations) ? stored.migrations : [];
+    const pending = MIGRATIONS.filter(m => !done.includes(m.id));
+    if (pending.length) {                        // cambios de contenido pendientes: se aplican una vez y se guardan
+      await env.PLANTILLAS.put(PREV, JSON.stringify(stored));
+      pending.forEach(m => { m.run(stored.items); done.push(m.id); });
+      stored.migrations = done;
+      stored.rev = (stored.rev || 0) + 1;
+      stored.savedAt = new Date().toISOString();
+      await env.PLANTILLAS.put(KEY, JSON.stringify(stored));
+    }
+    return stored;
+  }
   const items = {};
   try {
     const r = await env.ASSETS.fetch(new URL('/plantillas.json', request.url));
@@ -30,7 +44,7 @@ async function load(env, request) {
       (d.plantillas || []).forEach(o => { if (o && o.id) items[o.id] = o; });
     }
   } catch (e) { /* sin plantillas iniciales */ }
-  return { rev: 0, items };
+  return { rev: 0, items, migrations: MIGRATIONS.map(m => m.id) };
 }
 
 function authorized(request, env) {
