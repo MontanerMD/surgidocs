@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="description" content="SurgiDocs: plantillas de consulta, urgencias y protocolos quirúrgicos de Cirugía General y del Aparato Digestivo, listas para rellenar y copiar.">
 <meta name="theme-color" content="#db2777">
+<meta name="color-scheme" content="only light">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.5 system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>SurgiDocs · ByAMS</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -23,22 +24,8 @@
   --f:"Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --f-mono:"JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   --top:61px; --nav-h:64px;
+  color-scheme:light;
 }
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#0b0b0e; --surface:#141418; --sunk:#1c1c21; --hover:#202027;
-  --ink:#fafafa; --ink2:#d4d4d8; --muted:#a1a1aa; --faint:#71717a; --line:#27272a; --line2:#3f3f46;
-  --accent:#f472b6; --accent-hover:#f9a8d4; --accent-ink:#1a0610; --accent-soft:#2a1020; --accent-line:#5b2140; --accent-text:#f9a8d4;
-  --warn:#fbbf24; --warn-soft:#3b2a08;
-  --urg:#fb923c; --qx:#2dd4bf; --cex:#818cf8; --com:#a78bfa; --danger:#f87171;
-  --fill-line:#9d174d; --opt-soft:#1e1b4b; --opt-line:#3730a3; --opt-ink:#c7d2fe; --date-soft:#052e24; --date-line:#065f46; --date-ink:#6ee7b7; --shadow:0 1px 2px rgb(0 0 0 / .5); color-scheme:dark}}
-:root[data-theme="dark"]{
-  --bg:#0b0b0e; --surface:#141418; --sunk:#1c1c21; --hover:#202027;
-  --ink:#fafafa; --ink2:#d4d4d8; --muted:#a1a1aa; --faint:#71717a; --line:#27272a; --line2:#3f3f46;
-  --accent:#f472b6; --accent-hover:#f9a8d4; --accent-ink:#1a0610; --accent-soft:#2a1020; --accent-line:#5b2140; --accent-text:#f9a8d4;
-  --warn:#fbbf24; --warn-soft:#3b2a08;
-  --urg:#fb923c; --qx:#2dd4bf; --cex:#818cf8; --com:#a78bfa; --danger:#f87171;
-  --fill-line:#9d174d; --opt-soft:#1e1b4b; --opt-line:#3730a3; --opt-ink:#c7d2fe; --date-soft:#052e24; --date-line:#065f46; --date-ink:#6ee7b7; --shadow:0 1px 2px rgb(0 0 0 / .5); color-scheme:dark}
-
 *{box-sizing:border-box}
 html,body{height:100%}
 body{background:var(--bg);color:var(--ink);font-family:var(--f);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
@@ -85,7 +72,8 @@ kbd{font-family:var(--f-mono);font-size:10.5px;line-height:1;padding:3px 5px;bor
 .search{flex:1;max-width:560px;margin:0 auto;display:flex;align-items:center;gap:10px;height:40px;padding:0 14px;border-radius:999px;background:var(--sunk);border:1px solid transparent;transition:.15s}
 .search:focus-within{background:var(--surface);border-color:var(--accent-line);box-shadow:0 0 0 3px var(--accent-soft)}
 .search .ico{color:var(--faint)}
-.search input{flex:1;min-width:0;border:0;background:transparent;outline:none;font-size:14px}
+.search{min-width:0}
+.search input{flex:1;min-width:0;width:0;border:0;background:transparent;outline:none;font-size:14px}
 .search input::placeholder{color:var(--faint)}
 .top-actions{display:flex;gap:8px;flex:none}
 
@@ -374,8 +362,11 @@ textarea.recs-ta{min-height:24vh}
 .detected{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:12.5px;color:var(--muted)}
 .tag{display:inline-flex;align-items:center;gap:6px;min-height:24px;padding:0 9px;border-radius:999px;font-size:11.5px;font-weight:600;background:var(--accent-soft);color:var(--accent-text)}
 .tag.plain{background:var(--sunk);color:var(--muted)}
-.edbar{position:sticky;bottom:0;display:flex;gap:8px;align-items:center;padding:14px 0 calc(14px + env(safe-area-inset-bottom,0px));background:linear-gradient(transparent,var(--surface) 30%)}
+.edbar{position:sticky;bottom:0;z-index:6;display:flex;gap:8px;align-items:center;padding:14px 0 calc(14px + env(safe-area-inset-bottom,0px));background:linear-gradient(transparent,var(--surface) 30%)}
 .edbar .sp{flex:1}
+.edbar .err:empty{display:none}
+.edbar{flex-wrap:wrap}
+.edbar .err{flex-basis:100%;order:-1;text-align:right}
 .err{color:var(--danger);font-size:12.5px;font-weight:600}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:12px}
 .card p{margin:0;color:var(--muted);font-size:13px}
@@ -477,6 +468,24 @@ pre.sample{margin:0;font-family:var(--f-mono);font-size:11.5px;background:var(--
   .bottomnav button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:0;background:none;font-size:11px;font-weight:600;color:var(--muted)}
   .bottomnav button[aria-current="true"]{color:var(--accent-text)}
   .bottomnav .plus{display:grid;place-items:center;width:44px;height:44px;border-radius:999px;background:var(--accent);color:var(--accent-ink);margin-top:-20px;box-shadow:var(--shadow)}
+}
+@media (max-width:480px){
+  .mat-q button{display:none}
+  .mat-row:has(.mat-drag){gap:4px!important}
+  .mat-list{padding:8px 6px 10px}
+  .mat-head .mat-sum{display:none}
+  .edbar{gap:6px}
+  .edbar .btn{padding-left:12px;padding-right:12px}
+  .edbar .btn.danger .lbl{display:none}
+  .copybar{gap:6px!important}
+  .copybar .btn{font-size:13px;hyphens:manual}
+  .copybar .btn .ico{display:none}
+  .doc-head{padding-left:12px}
+  .hm-hero h1{font-size:22px}
+}
+@media (max-width:360px){
+  .copybar .btn{font-size:12px!important;padding-left:6px!important;padding-right:6px!important}
+  .doc-actions .btn{padding-left:10px;padding-right:10px}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
@@ -1043,7 +1052,7 @@ function renderDetail(o){
   const r=$('#preview-recs'); if(r){ r.innerHTML = saved && saved.recs!=null ? saved.recs : docHTML(o.recs,'ropt:'); makeEditable(r); }
   if($('#matList')) renderMat(saved && Array.isArray(saved.mat) ? saved.mat : parseMat(o.mat));
   $('#copybar').innerHTML = (hasRecs||hasMat)
-    ? `<button class="btn primary" data-action="copy" data-part="body">${hasMat&&hasRecs?'':ico('copy')}${o.type==='quirurgica'?'Protocolo':'Informe'}</button>${hasMat?`<button class="btn outline" data-action="copy" data-part="mat">${hasRecs?'':ico('copy')}Material</button>`:''}${hasRecs?`<button class="btn outline" data-action="copy" data-part="recs" aria-label="Copiar recomendaciones al alta">${hasMat?'':ico('copy')}Recomendaciones</button>`:''}`
+    ? `<button class="btn primary" data-action="copy" data-part="body">${hasMat&&hasRecs?'':ico('copy')}${o.type==='quirurgica'?'Protocolo':'Informe'}</button>${hasMat?`<button class="btn outline" data-action="copy" data-part="mat">${hasRecs?'':ico('copy')}Material</button>`:''}${hasRecs?`<button class="btn outline" data-action="copy" data-part="recs" aria-label="Copiar recomendaciones al alta">${hasMat?'':ico('copy')}Recomen&shy;daciones</button>`:''}`
     : `<button class="btn primary" data-action="copy" data-part="body">${ico('copy')}Copiar texto</button>`;
   refreshDoc(!!saved);
 }
@@ -1276,7 +1285,7 @@ function renderEditor(o){
       <div id="edSyntax" hidden>${syntaxHelp()}</div>
       <div class="detected" id="detected"></div>
       <div class="edbar">
-        ${!isNew?`<button type="button" class="btn danger" data-action="del">${ico('trash')}Borrar</button>`:''}
+        ${!isNew?`<button type="button" class="btn danger" data-action="del" aria-label="Borrar plantilla">${ico('trash')}<span class="lbl">Borrar</span></button>`:''}
         <span class="sp"></span><span class="err" id="edErr"></span>
         <button type="button" class="btn ghost" data-action="${isNew?'home':'open-current'}">Cancelar</button>
         <button type="submit" class="btn primary">${ico('check')}Guardar</button>
