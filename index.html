@@ -182,6 +182,14 @@ select.inp{appearance:auto}
 .doc.recs{--t:var(--cex)}
 .doc.mat{--t:var(--com)}
 .mat-list{display:flex;flex-direction:column;padding:10px 12px 12px}
+.doc.mat:not(.open) .mat-head{border-bottom-color:transparent}
+.mat-head{padding-left:8px}
+.mat-toggle{flex:1;min-width:0;display:flex;align-items:center;gap:10px;border:0;background:none;font:inherit;color:var(--ink);text-align:left;padding:4px 8px;border-radius:8px;cursor:pointer}
+.mat-toggle:hover{background:var(--hover)}
+.mat-toggle b{font-weight:600}
+.mat-toggle .chev{width:16px;height:16px;flex:none;fill:none;stroke:var(--muted);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .18s}
+.doc.mat.open .mat-toggle .chev{transform:rotate(90deg)}
+.mat-sum{font-size:12px;color:var(--muted);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mat-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px;padding:4px 4px;border-radius:10px}
 .mat-row:hover{background:var(--hover)}
 .mat-row + .mat-row{border-top:1px solid var(--line)}
@@ -580,11 +588,13 @@ function renderMat(rows){
   setTimeout(matFit,0);
   const w=state.canWrite;
   box.innerHTML=(rows.length?rows.map(matRowHTML).join(''):`<div class="mat-empty">Esta plantilla aún no tiene material.${w?' Añádelo aquí o al editar la plantilla.':' Para añadirlo, activa la edición.'}</div>`)+(w?`<button type="button" class="mat-add" data-action="mat-add">+ Añadir material</button>`:'');
+  matSummary();
   const h=$('#matHint'); if(h) h.textContent= w ? 'Pon la cantidad en cada material usado. Solo se copian los que tienen número.' : 'Solo se copian los materiales con número. Para cambiar el material o las cantidades, activa la edición.';
 }
 function readMat(){ return [...document.querySelectorAll('#matList .mat-row')].map(r=>({q:(()=>{ const i=r.querySelector('.mat-q input'); return (i?i.value:(r.querySelector('.mat-q').dataset.q||'')).trim(); })(), n:(()=>{ const e=r.querySelector('.mat-n'); return (e.tagName==='TEXTAREA'?e.value:(e.dataset.n||'')).trim(); })()})); }
+function matSummary(){ const el=$('#matSum'); if(!el) return; const r=readMat().filter(x=>x.n); const on=r.filter(x=>Number(x.q)>0).length; el.textContent = r.length ? `· ${on} de ${r.length} con cantidad` : '· vacío'; }
 function matText(){ return readMat().filter(r=>r.n && Number(r.q)>0).map(r=>`- ${r.n} x${Number(r.q)}`).join('\n'); }
-function matRowSync(row){ const i=row.querySelector('.mat-q input'); if(i) row.classList.toggle('on', Number(i.value)>0); }
+function matRowSync(row){ const i=row.querySelector('.mat-q input'); if(i) row.classList.toggle('on', Number(i.value)>0); matSummary(); }
 function matFit(){ if(CSS.supports && CSS.supports('field-sizing','content')) return; document.querySelectorAll('#matList textarea.mat-n').forEach(t=>{ t.style.height='auto'; t.style.height=t.scrollHeight+'px'; }); }
 function joinMulti(arr){ if(!arr||!arr.length) return ''; if(arr.length===1) return arr[0]; return arr.slice(0,-1).join(', ')+' y '+arr[arr.length-1]; }
 function fillGap(f, s, vals){
@@ -741,7 +751,7 @@ function renderStatus(){
 function setMain(html){ $('#main').innerHTML=`<div class="page"><div class="page-in">${html}</div></div>`; }
 function go(view, id=null){
   state.view=view; state.currentId=id; state.hlKey=null;
-  if(view==='detail' && id) pushRecent(id);
+  if(view==='detail' && id){ pushRecent(id); state.matOpen=false; }
   if(view!=='list') { homeQ=''; homeSel=0; }
   document.body.dataset.view=view;
   $('#navList').setAttribute('aria-current', view==='list');
@@ -883,15 +893,17 @@ function renderDetail(o){
       <span><kbd>Tab</kbd> siguiente hueco</span>
       <span class="pending" id="pending"></span>
     </div>
+    ${hasMat?`<article class="doc mat${state.matOpen?' open':''}">
+      <div class="doc-head mat-head"><button type="button" class="mat-toggle" data-action="mat-toggle" aria-expanded="${!!state.matOpen}" aria-controls="matBody"><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg><span class="dot"></span><b>Material quirúrgico</b><span class="mat-sum" id="matSum"></span></button>${copyMat}</div>
+      <div class="mat-body" id="matBody" ${state.matOpen?'':'hidden'}>
+        <div class="mat-list" id="matList" aria-label="Material quirúrgico"></div>
+        <p class="mat-hint" id="matHint"></p>
+      </div>
+    </article>`:''}
     <article class="doc t-${esc(o.type)}">
       <div class="doc-head"><span class="dot"></span><b>${o.type==='quirurgica'?'Protocolo quirúrgico':hasRecs?'Informe':esc(TYPES[o.type]?.label||'Texto')}</b><span class="sp"></span>${copyBody}</div>
       <div class="doc-text" id="preview" data-part="body" role="textbox" aria-multiline="true" aria-label="Texto del informe, editable" spellcheck="true"></div>
     </article>
-    ${hasMat?`<article class="doc mat">
-      <div class="doc-head"><span class="dot"></span><b>Material quirúrgico</b><span class="sp"></span>${copyMat}</div>
-      <div class="mat-list" id="matList" aria-label="Material quirúrgico"></div>
-      <p class="mat-hint" id="matHint"></p>
-    </article>`:''}
     ${hasRecs?`<article class="doc recs">
       <div class="doc-head"><span class="dot"></span><b>Recomendaciones al alta</b><span class="sp"></span>${copyRecs}</div>
       <div class="doc-text" id="preview-recs" data-part="recs" role="textbox" aria-multiline="true" aria-label="Recomendaciones al alta, editables" spellcheck="true"></div>
@@ -1527,9 +1539,10 @@ document.addEventListener('click', async ev=>{
       break; }
     case 'reset': { const o=state.items.get(state.currentId); if(!o) break; closeChoice(); delete state.docs[o.id]; renderDetail(o); $('#docPage') && ($('#docPage').scrollTop=0); toast('Plantilla reiniciada'); break; }
     case 'copy': copyPart(b.dataset.part||'body'); break;
+    case 'mat-toggle': { state.matOpen=!state.matOpen; const art=b.closest('.doc.mat'); art.classList.toggle('open',state.matOpen); b.setAttribute('aria-expanded',state.matOpen); $('#matBody').hidden=!state.matOpen; matFit(); break; }
     case 'mat-inc': case 'mat-dec': { if(!state.canWrite) break; const row=b.closest('.mat-row'), i=row.querySelector('.mat-q input'); const v=Math.max(0,Math.min(999,(Number(i.value)||0)+(b.dataset.action==='mat-inc'?1:-1))); i.value=v?String(v):''; matRowSync(row); saveDocs(); break; }
-    case 'mat-del': { if(!state.canWrite) break; const row=b.closest('.mat-row'); const nx=row.nextElementSibling; row.remove(); if(!document.querySelector('#matList .mat-row')) renderMat([]); saveDocs(); const f=nx&&nx.querySelector&&nx.querySelector('.mat-n'); if(f) f.focus(); break; }
-    case 'mat-add': { if(!state.canWrite) break; const box=$('#matList'); const em=box.querySelector('.mat-empty'); if(em) em.remove(); b.insertAdjacentHTML('beforebegin', matRowHTML({n:'',q:'1'})); const row=b.previousElementSibling; row.querySelector('.mat-n').focus(); saveDocs(); break; }
+    case 'mat-del': { if(!state.canWrite) break; const row=b.closest('.mat-row'); const nx=row.nextElementSibling; row.remove(); if(!document.querySelector('#matList .mat-row')) renderMat([]); matSummary(); saveDocs(); const f=nx&&nx.querySelector&&nx.querySelector('.mat-n'); if(f) f.focus(); break; }
+    case 'mat-add': { if(!state.canWrite) break; const box=$('#matList'); const em=box.querySelector('.mat-empty'); if(em) em.remove(); b.insertAdjacentHTML('beforebegin', matRowHTML({n:'',q:'1'})); const row=b.previousElementSibling; row.querySelector('.mat-n').focus(); matSummary(); saveDocs(); break; }
     case 'ins': insertAtCursor(b.dataset.v,b.dataset.sel); break;
     case 'del': {
       if(!b.classList.contains('armed')){ b.classList.add('armed'); b.innerHTML=`${ico('trash')}Pulsa otra vez para borrar`; break; }
