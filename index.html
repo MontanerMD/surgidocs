@@ -181,6 +181,30 @@ select.inp{appearance:auto}
 .doc-head .sp{flex:1}
 .doc.recs{--t:var(--cex)}
 .doc.mat{--t:var(--com)}
+.mat-list{display:flex;flex-direction:column;padding:10px 12px 12px}
+.mat-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px;padding:4px 4px;border-radius:10px}
+.mat-row:hover{background:var(--hover)}
+.mat-row + .mat-row{border-top:1px solid var(--line)}
+.mat-row:hover + .mat-row,.mat-row:hover{border-color:transparent}
+.mat-q{display:inline-flex;align-items:center;border:1px solid var(--line2);border-radius:9px;background:var(--surface);overflow:hidden;height:32px}
+.mat-q button{width:28px;height:100%;border:0;background:none;color:var(--muted);font:inherit;font-size:16px;line-height:1;cursor:pointer;display:grid;place-items:center}
+.mat-q button:hover{background:var(--hover);color:var(--ink)}
+.mat-q input{width:34px;height:100%;border:0;border-left:1px solid var(--line);border-right:1px solid var(--line);text-align:center;font:inherit;font-weight:700;font-size:14px;font-variant-numeric:tabular-nums;color:var(--ink);background:none;outline:none;-moz-appearance:textfield;appearance:textfield}
+.mat-q input::-webkit-outer-spin-button,.mat-q input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.mat-q input:focus{background:var(--accent-soft)}
+.mat-q input::placeholder{color:var(--faint);font-weight:500}
+.mat-row.on .mat-q{border-color:var(--t);box-shadow:0 0 0 1px var(--t) inset}
+.mat-n{border:0;background:none;font:inherit;font-size:14.5px;line-height:1.35;color:var(--muted);padding:6px 4px;border-radius:6px;outline:none;min-width:0;width:100%;resize:none;overflow:hidden;field-sizing:content;display:block}
+.mat-row.on .mat-n{color:var(--ink)}
+.mat-n:focus{background:var(--sunk);color:var(--ink)}
+.mat-del{width:28px;height:28px;border:0;border-radius:8px;background:none;color:var(--faint);cursor:pointer;opacity:0;display:grid;place-items:center;font-size:17px;line-height:1}
+.mat-row:hover .mat-del,.mat-del:focus-visible{opacity:1}
+.mat-del:hover{background:var(--sunk);color:var(--ink)}
+.mat-add{align-self:flex-start;margin:8px 4px 0;border:1px dashed var(--line2);background:none;border-radius:9px;padding:6px 12px;font:inherit;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer}
+.mat-add:hover{border-color:var(--t);color:var(--ink)}
+.mat-empty{padding:4px 6px 2px;color:var(--faint);font-size:13.5px}
+.mat-hint{padding:0 16px 12px;font-size:12px;color:var(--faint);margin:0}
+@media (hover:none){ .mat-del{opacity:1} }
 .doc-text:empty::before{content:attr(data-ph);color:var(--faint);pointer-events:none}
 .doc-text{padding:18px 20px 22px;white-space:pre-wrap;overflow-wrap:anywhere;font-size:13.5px;line-height:1.72;color:var(--ink2)}
 .doc-text mark{background:none;color:var(--ink);font-weight:600;box-shadow:inset 0 -2px 0 var(--fill-line);cursor:text;padding:0 1px;-webkit-box-decoration-break:clone;box-decoration-break:clone}
@@ -400,7 +424,8 @@ pre.sample{margin:0;font-family:var(--f-mono);font-size:11.5px;background:var(--
   .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
   .doc-head .btn kbd{display:none}
   body[data-view="detail"] .copybar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:25;gap:8px;padding:10px max(16px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));background:var(--surface);border-top:1px solid var(--line)}
-  .copybar .btn{flex:1;height:46px;white-space:normal;line-height:1.2}
+  .copybar .btn{flex:1;height:46px;white-space:normal;line-height:1.2;min-width:0;padding-left:8px;padding-right:8px}
+  .copybar .btn:nth-child(3){font-size:12.5px}
   body[data-view="list"] .bottomnav{display:block;position:fixed;left:0;right:0;bottom:0;z-index:25;background:var(--surface);border-top:1px solid var(--line);padding:0 max(16px,env(safe-area-inset-right,0px)) env(safe-area-inset-bottom,0px) max(16px,env(safe-area-inset-left,0px))}
   .bottomnav .in{display:grid;grid-template-columns:repeat(3,1fr);height:var(--nav-h)}
   .bottomnav button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:0;background:none;font-size:11px;font-weight:600;color:var(--muted)}
@@ -533,6 +558,25 @@ function splitRecs(text){
 }
 const allText = o => (o.body||'') + '\n' + (o.mat||'') + '\n' + (o.recs||'');
 const hasMatBox = o => o.type==='quirurgica' || !!(o.mat&&o.mat.trim());
+/* material: one slot per line; optional default quantity as trailing «x2» */
+function parseMat(src){
+  return String(src||'').split('\n').map(l=>l.replace(/^\s*(?:[-•*·]\s*)?/,'').replace(/\s+$/,'')).filter(Boolean).map(l=>{
+    const m=l.match(/^(.*?)\s*[x×]\s*(\d{1,3})$/i); return m&&m[1] ? {n:m[1], q:m[2]} : {n:l, q:''};
+  });
+}
+function matRowHTML(r){
+  const on=Number(r.q)>0;
+  return `<div class="mat-row${on?' on':''}"><span class="mat-q"><button type="button" data-action="mat-dec" aria-label="Uno menos" tabindex="-1">−</button><input type="number" inputmode="numeric" min="0" max="999" value="${esc(r.q||'')}" placeholder="–" aria-label="Cantidad de ${esc(r.n||'material')}"><button type="button" data-action="mat-inc" aria-label="Uno más" tabindex="-1">+</button></span><textarea class="mat-n" rows="1" placeholder="Nombre del material" aria-label="Material" spellcheck="true">${esc(r.n||'')}</textarea><button type="button" class="mat-del" data-action="mat-del" aria-label="Quitar este material" title="Quitar">×</button></div>`;
+}
+function renderMat(rows){
+  const box=$('#matList'); if(!box) return;
+  setTimeout(matFit,0);
+  box.innerHTML=(rows.length?rows.map(matRowHTML).join(''):`<div class="mat-empty">Esta plantilla aún no tiene material. Añádelo aquí o al editar la plantilla.</div>`)+`<button type="button" class="mat-add" data-action="mat-add">+ Añadir material</button>`;
+}
+function readMat(){ return [...document.querySelectorAll('#matList .mat-row')].map(r=>({q:r.querySelector('.mat-q input').value.trim(), n:r.querySelector('.mat-n').value.trim()})); }
+function matText(){ return readMat().filter(r=>r.n && Number(r.q)>0).map(r=>`- ${r.n} x${Number(r.q)}`).join('\n'); }
+function matRowSync(row){ row.classList.toggle('on', Number(row.querySelector('.mat-q input').value)>0); }
+function matFit(){ if(CSS.supports && CSS.supports('field-sizing','content')) return; document.querySelectorAll('#matList textarea.mat-n').forEach(t=>{ t.style.height='auto'; t.style.height=t.scrollHeight+'px'; }); }
 function joinMulti(arr){ if(!arr||!arr.length) return ''; if(arr.length===1) return arr[0]; return arr.slice(0,-1).join(', ')+' y '+arr[arr.length-1]; }
 function fillGap(f, s, vals){
   if(!f || !f.options || !hasGap(s)) return s;
@@ -836,7 +880,8 @@ function renderDetail(o){
     </article>
     ${hasMat?`<article class="doc mat">
       <div class="doc-head"><span class="dot"></span><b>Material quirúrgico</b><span class="sp"></span>${copyMat}</div>
-      <div class="doc-text" id="preview-mat" data-part="mat" role="textbox" aria-multiline="true" aria-label="Material quirúrgico, editable" spellcheck="true" data-ph="Escribe aquí el material utilizado (mallas, grapadoras, suturas, drenajes…)."></div>
+      <div class="mat-list" id="matList" aria-label="Material quirúrgico"></div>
+      <p class="mat-hint">Pon la cantidad en cada material usado. Solo se copian los que tienen número.</p>
     </article>`:''}
     ${hasRecs?`<article class="doc recs">
       <div class="doc-head"><span class="dot"></span><b>Recomendaciones al alta</b><span class="sp"></span>${copyRecs}</div>
@@ -847,9 +892,9 @@ function renderDetail(o){
   const saved = state.docs[o.id] && state.docs[o.id].sig===contentSig(o) ? state.docs[o.id] : null;
   const p=$('#preview'); p.innerHTML = saved ? saved.body : docHTML(o.body,'opt:'); makeEditable(p);
   const r=$('#preview-recs'); if(r){ r.innerHTML = saved && saved.recs!=null ? saved.recs : docHTML(o.recs,'ropt:'); makeEditable(r); }
-  const mt=$('#preview-mat'); if(mt){ mt.innerHTML = saved && saved.mat!=null ? saved.mat : docHTML(o.mat||'','mopt:'); makeEditable(mt); }
+  if($('#matList')) renderMat(saved && Array.isArray(saved.mat) ? saved.mat : parseMat(o.mat));
   $('#copybar').innerHTML = (hasRecs||hasMat)
-    ? `<button class="btn primary" data-action="copy" data-part="body">${ico('copy')}${o.type==='quirurgica'?'Protocolo':'Informe'}</button>${hasMat?`<button class="btn outline" data-action="copy" data-part="mat">${ico('copy')}Material</button>`:''}${hasRecs?`<button class="btn outline" data-action="copy" data-part="recs">${ico('copy')}Recomendaciones</button>`:''}`
+    ? `<button class="btn primary" data-action="copy" data-part="body">${hasMat&&hasRecs?'':ico('copy')}${o.type==='quirurgica'?'Protocolo':'Informe'}</button>${hasMat?`<button class="btn outline" data-action="copy" data-part="mat">${hasRecs?'':ico('copy')}Material</button>`:''}${hasRecs?`<button class="btn outline" data-action="copy" data-part="recs" aria-label="Copiar recomendaciones al alta">${hasMat?'':ico('copy')}Recomendaciones</button>`:''}`
     : `<button class="btn primary" data-action="copy" data-part="body">${ico('copy')}Copiar texto</button>`;
   refreshDoc(!!saved);
 }
@@ -862,8 +907,8 @@ function refreshDoc(dirty){
 }
 function saveDocs(){
   const o=state.items.get(state.currentId); if(!o) return;
-  const p=$('#preview'), r=$('#preview-recs'), mt=$('#preview-mat');
-  state.docs[o.id]={sig:contentSig(o), body:p?p.innerHTML:'', recs:r?r.innerHTML:null, mat:mt?mt.innerHTML:null};
+  const p=$('#preview'), r=$('#preview-recs');
+  state.docs[o.id]={sig:contentSig(o), body:p?p.innerHTML:'', recs:r?r.innerHTML:null, mat:$('#matList')?readMat():null};
   refreshDoc(true);
 }
 function setMarkValue(mk, v){
@@ -949,9 +994,9 @@ function finishMulti(){
 async function copyPart(part){
   const o=state.items.get(state.currentId); if(!o) return;
   if(part==='recs' && !(o.recs&&o.recs.trim())) return;
-  const el = part==='recs' ? $('#preview-recs') : part==='mat' ? $('#preview-mat') : $('#preview');
-  const txt = serializeDoc(el);
-  if(part==='mat' && !txt.trim()){ toast('Escribe primero el material'); if(el) el.focus(); return; }
+  const el = part==='recs' ? $('#preview-recs') : $('#preview');
+  const txt = part==='mat' ? matText() : serializeDoc(el);
+  if(part==='mat' && !txt.trim()){ toast('Pon la cantidad en algún material'); const q=document.querySelector('.mat-q input'); if(q) q.focus(); return; }
   const ok=await copyText(txt, part==='recs'?'Recomendaciones copiadas':part==='mat'?'Material copiado':(o.type==='quirurgica'?'Protocolo copiado':o.recs?'Informe copiado':'Texto copiado'));
   if(ok && state.canWrite){ patchItem(o.id,{uses:(o.uses||0)+1,lastUsed:nowISO()}).then(()=>renderList()).catch(()=>{}); }
 }
@@ -1041,13 +1086,13 @@ function edSource(part){
 function edBlock(part, title, src, hint){
   return `<section class="ed-block" data-part="${part}">
     <div class="ed-head"><h2>${title}</h2>${hint?`<span class="hint">${hint}</span>`:''}</div>
-    <div class="ed-tools" role="toolbar" aria-label="Herramientas: ${title}">
+    <div class="ed-tools" role="toolbar" aria-label="Herramientas: ${title}" ${part==='mat'?'hidden data-never':''}>
       <button type="button" class="tool" data-tool="text" data-part="${part}" title="Un hueco para escribir (lo que en papel sería una X)"><span class="sw k-text"></span>Hueco para escribir</button>
       <button type="button" class="tool" data-tool="choice" data-part="${part}" title="Elegir entre varias opciones (lo que en papel sería «a / b»)"><span class="sw k-choice"></span>Opciones a elegir</button>
       <button type="button" class="tool" data-tool="date" data-part="${part}" title="Una fecha"><span class="sw k-date"></span>Fecha</button>
       <button type="button" class="tool" data-tool="opt" data-part="${part}" title="Un paso que solo se copia si lo incluyes"><span class="sw k-opt"></span><span class="lbl-opt">Paso opcional</span></button>
     </div>
-    <div class="ed-text" id="ed-${part}" data-part="${part}" spellcheck="true" role="textbox" aria-multiline="true" aria-label="${title}" data-ph="${part==='body'?'Escribe o pega aquí el texto de la plantilla, tal como quieres que se copie.':part==='mat'?'Opcional. El material que usas siempre en esta intervención (mallas, grapadoras, suturas…). Si lo dejas vacío, el cuadro aparece en blanco para escribirlo en cada paciente.':'Opcional. Escribe o pega las recomendaciones para el paciente.'}">${edHTML(src)}</div>
+    <div class="ed-text" id="ed-${part}" data-part="${part}" spellcheck="true" role="textbox" aria-multiline="true" aria-label="${title}" data-ph="${part==='body'?'Escribe o pega aquí el texto de la plantilla, tal como quieres que se copie.':part==='mat'?'Un material por línea, por ejemplo:\nTrócar de 5 mm x2\nEndobolsa x1\nPenrose\n(«x2» al final = cantidad que aparece ya puesta; sin número, se rellena en cada paciente)':'Opcional. Escribe o pega las recomendaciones para el paciente.'}">${edHTML(src)}</div>
     <textarea class="inp body code" id="ed-${part}-code" spellcheck="false" hidden></textarea>
   </section>`;
 }
@@ -1074,7 +1119,7 @@ function renderEditor(o){
         <li>Pulsa cualquier campo rosa para cambiarlo o quitarlo. Los títulos en mayúsculas («TÉCNICA:») se verán en negrita.</li>
       </ol>
       ${edBlock('body', 'Texto del informe', d.body)}
-      ${edBlock('mat', 'Material quirúrgico', d.mat||'', 'Opcional · cuadro aparte en las hojas quirúrgicas')}
+      ${edBlock('mat', 'Material quirúrgico', d.mat||'', 'Opcional · un material por línea; «x2» al final pone la cantidad')}
       ${edBlock('recs', 'Recomendaciones al alta', d.recs, 'Opcional · se muestran y copian en un cuadro aparte')}
       <div id="edSyntax" hidden>${syntaxHelp()}</div>
       <div class="detected" id="detected"></div>
@@ -1095,7 +1140,7 @@ function toggleAdv(on){
     if(on){ ta.value=serializeEd(div); }
     else { div.innerHTML=edHTML(ta.value); }
     div.hidden=on; ta.hidden=!on;
-    const tools=div.parentElement.querySelector('.ed-tools'); if(tools) tools.hidden=on;
+    const tools=div.parentElement.querySelector('.ed-tools'); if(tools && !tools.hasAttribute('data-never')) tools.hidden=on;
   });
   ED.adv=on; $('#edSyntax').hidden=!on; document.querySelector('.steps-help').hidden=on;
   updateDetected();
@@ -1473,6 +1518,9 @@ document.addEventListener('click', async ev=>{
       break; }
     case 'reset': { const o=state.items.get(state.currentId); if(!o) break; closeChoice(); delete state.docs[o.id]; renderDetail(o); $('#docPage') && ($('#docPage').scrollTop=0); toast('Plantilla reiniciada'); break; }
     case 'copy': copyPart(b.dataset.part||'body'); break;
+    case 'mat-inc': case 'mat-dec': { const row=b.closest('.mat-row'), i=row.querySelector('.mat-q input'); const v=Math.max(0,Math.min(999,(Number(i.value)||0)+(b.dataset.action==='mat-inc'?1:-1))); i.value=v?String(v):''; matRowSync(row); saveDocs(); break; }
+    case 'mat-del': { const row=b.closest('.mat-row'); const nx=row.nextElementSibling; row.remove(); if(!document.querySelector('#matList .mat-row')) renderMat([]); saveDocs(); const f=nx&&nx.querySelector&&nx.querySelector('.mat-n'); if(f) f.focus(); break; }
+    case 'mat-add': { const box=$('#matList'); const em=box.querySelector('.mat-empty'); if(em) em.remove(); b.insertAdjacentHTML('beforebegin', matRowHTML({n:'',q:'1'})); const row=b.previousElementSibling; row.querySelector('.mat-n').focus(); saveDocs(); break; }
     case 'ins': insertAtCursor(b.dataset.v,b.dataset.sel); break;
     case 'del': {
       if(!b.classList.contains('armed')){ b.classList.add('armed'); b.innerHTML=`${ico('trash')}Pulsa otra vez para borrar`; break; }
@@ -1516,6 +1564,7 @@ document.addEventListener('input', ev=>{
     }
     saveDocs(); return;
   }
+  if(t.closest && t.closest('#matList')){ const row=t.closest('.mat-row'); if(row) matRowSync(row); if(t.classList.contains('mat-n')) matFit(); saveDocs(); return; }
   if(t.id==='hmQ'){ homeQ=t.value; homeSel=0; updateHomeResults(); return; }
   if(t.id==='q'){ state.q=t.value; renderList(); return; }
   if(t.id==='ed-body'||t.id==='ed-recs'||(t.classList&&t.classList.contains('code'))){ updateDetected(); $('#edErr').textContent=''; return; }
@@ -1554,6 +1603,7 @@ document.addEventListener('keydown', ev=>{
   if(mod && ev.key==='Enter' && state.view==='detail'){ ev.preventDefault(); copyPart(ev.shiftKey?'recs':'body'); return; }
   const inDoc = ev.target.closest && ev.target.closest('.doc-text');
   if(inDoc && ev.key==='Tab'){ ev.preventDefault(); nextHole(ev.shiftKey?-1:1); return; }
+  if(ev.target.classList && ev.target.classList.contains('mat-n') && ev.key==='Enter'){ ev.preventDefault(); const row=ev.target.closest('.mat-row'); row.insertAdjacentHTML('afterend', matRowHTML({n:'',q:'1'})); row.nextElementSibling.querySelector('.mat-n').focus(); saveDocs(); return; }
   if(ev.target.id==='hmQ'){
     const r=homeMatches();
     if(ev.key==='ArrowDown'||ev.key==='ArrowUp'){ if(!r.length) return; ev.preventDefault(); homeSel=(homeSel+(ev.key==='ArrowDown'?1:-1)+r.length)%r.length; updateHomeResults(); return; }
