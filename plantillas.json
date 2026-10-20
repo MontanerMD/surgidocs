@@ -1,6 +1,6 @@
 {
  "app": "Plantillario CGAD",
- "version": 9,
+ "version": 10,
  "plantillas": [
   {
    "id": "sd-absceso-cutaneo-o-quiste-epidermoide-abscesificado",
@@ -247,8 +247,8 @@
    "fav": false,
    "uses": 0,
    "createdAt": "2026-10-18T16:27:42.909Z",
-   "updatedAt": "2026-10-20T17:02:07.000Z",
-   "mat": "Anestésico local (levobupivacaína 0,25% / ropivacaína 0,3%) x1\nTrócar de Hasson 10-12 mm x1\nInsuflador de CO₂ x1\nÓptica de 30º (10 mm) x1\nTrócar de 5 mm x2\nPinza de agarre atraumática de 5 mm x1\nPinza disectora monopolar (Maryland) x1\nTijera laparoscópica x1\nLazos preformados (Surgitie)\nTrócar de 12 mm\nEndo GIA Ultra 45 mm (carga morada)\nEndobolsa x1\nCánula de aspiración-irrigación x1\nPenrose\nSeda 1\nMonomax 1 x1\nGrapadora de piel x1\nApósito compresivo x3"
+   "updatedAt": "2026-10-20T17:33:02.000Z",
+   "mat": "Anestésico local (levobupivacaína 0,25% / ropivacaína 0,3%) x1\nTrócar de Hasson 10-12 mm x1\nInsuflador de CO₂ x1\nÓptica de 30º (10 mm) x1\nTrócar de 5 mm x2\nPinza de agarre atraumática de 5 mm x1\nPinza disectora monopolar (Maryland) x1\nTijera laparoscópica x1\nLazos preformados (Surgitie)\nTrócar de 12 mm x1 ?\nEndo GIA Ultra 45 mm (carga morada) x1 ?\nEndobolsa x1\nCánula de aspiración-irrigación x1 ?\nPenrose\nSeda 1\nMonomax 1 x1\nGrapadora de piel x1\nApósito compresivo x3"
   },
   {
    "id": "sd-biopsia-ungueal-lamina-lecho-matriz-o-unidad-completa",
