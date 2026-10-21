@@ -19,6 +19,12 @@ const MAT_APENDICECTOMIA = "Anestésico local (levobupivacaína 0,25% / ropivaca
 
 const MAT_APENDICECTOMIA_2 = "Anestésico local (levobupivacaína 0,25% / ropivacaína 0,3%) x1\nTrócar de Hasson 10-12 mm x1\nInsuflador de CO₂ x1\nÓptica de 30º (10 mm) x1\nTrócar de 5 mm x2\nPinza de agarre atraumática de 5 mm x1\nPinza disectora monopolar (Maryland) x1\nTijera laparoscópica x1\nLazos preformados (Surgitie)\nTrócar de 12 mm x1 ?\nEndo GIA Ultra 45 mm (carga morada) x1 ?\nEndobolsa x1\nCánula de aspiración-irrigación x1 ?\nPenrose\nSeda 1\nMonomax 1 x1\nGrapadora de piel x1\nApósito compresivo x3";
 
+/* 2026-10-21 · «en 10 días» → «en 10 días (desde la intervención)» en la retirada de grapas o puntos */
+export function desdeIntervencion(txt) {
+  if (!txt) return txt;
+  return txt.replace(/(Solicite cita con enfermería (?:de|en) su Centro de Salud en \d+ (?:días|semanas?))(?! \(desde la intervención\))( para valorar la retirada)/g, '$1 (desde la intervención)$2');
+}
+
 export function inferirAbordaje(o) {
   if (!o || o.type !== 'quirurgica') return '';
   const t = String(o.title || '').toLowerCase();
@@ -31,5 +37,6 @@ export const MIGRATIONS = [
   { id: '2026-10-20-sin-citas', run: items => { for (const o of Object.values(items)) { if (o && o.recs) o.recs = quitarCitas(o.recs); } } },
   { id: '2026-10-20-material-apendicectomia', run: items => { const o = items['sd-apendicectomia-laparoscopica']; if (o && !(o.mat && o.mat.trim())) o.mat = MAT_APENDICECTOMIA; } },
   { id: '2026-10-20-material-dudoso', run: items => { const o = items['sd-apendicectomia-laparoscopica']; if (o && o.mat === MAT_APENDICECTOMIA) o.mat = MAT_APENDICECTOMIA_2; } },
-  { id: '2026-10-20-abordaje', run: items => { for (const o of Object.values(items)) { if (o && !o.approach) { const a = inferirAbordaje(o); if (a) o.approach = a; } } } }
+  { id: '2026-10-20-abordaje', run: items => { for (const o of Object.values(items)) { if (o && !o.approach) { const a = inferirAbordaje(o); if (a) o.approach = a; } } } },
+  { id: '2026-10-21-desde-intervencion', run: items => { for (const o of Object.values(items)) { if (o && o.recs) o.recs = desdeIntervencion(o.recs); } } }
 ];
