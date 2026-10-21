@@ -172,6 +172,14 @@ select.inp{appearance:auto}
 .doc-head .sp{flex:1}
 .doc.recs{--t:var(--cex)}
 .doc.mat{--t:var(--com)}
+/* compartments: tinted header band + coloured cap, keyed to each box's colour */
+.doc{border-color:color-mix(in srgb,var(--t,var(--line2)) 22%,var(--line));border-top:3px solid var(--t,var(--line2))}
+.doc-head{background:color-mix(in srgb,var(--t,var(--faint)) 7%,var(--surface));border-bottom-color:color-mix(in srgb,var(--t,var(--line)) 20%,var(--line));padding-top:11px;padding-bottom:11px}
+.doc-head b{font-size:13.5px;letter-spacing:-.005em}
+.doc-head .dot{width:9px;height:9px;box-shadow:0 0 0 3px color-mix(in srgb,var(--t,var(--faint)) 18%,transparent)}
+.doc.mat:not(.open) .mat-head{border-bottom-color:transparent}
+.mat-toggle:hover{background:color-mix(in srgb,var(--t) 10%,var(--surface))!important}
+.doc:focus-within{border-top-color:var(--t,var(--accent))}
 .mat-list{display:flex;flex-direction:column;padding:10px 12px 12px}
 .mat-row{grid-template-columns:auto minmax(0,1fr) auto!important}
 .mat-row:has(.mat-drag){grid-template-columns:18px auto minmax(0,1fr) auto!important;gap:6px!important}
