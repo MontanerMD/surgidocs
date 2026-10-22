@@ -208,6 +208,9 @@ body.mat-dragging,body.mat-dragging *{cursor:grabbing!important;user-select:none
 .mat-sec-add:hover{background:var(--sunk);color:var(--ink)}
 .mat-sec.empty::after{content:"Vacío";font-size:11.5px;font-weight:500;letter-spacing:0;text-transform:none;color:var(--line2);order:-1;flex:none;margin-left:0}
 .mat-sec + .mat-row{border-top:0!important}
+.mat-row.pr{grid-template-columns:minmax(0,1fr) auto!important;padding-left:8px}
+.prep-empty{padding:4px 8px 6px;color:var(--line2);font-size:13.5px}
+.mat-sec + .prep-empty{border-top:0}
 .crumbs .appr{font-weight:600;color:var(--ink2)}
 .mat-foot{display:flex;align-items:center;gap:8px;margin-top:8px;padding:0 4px}
 .mat-foot .mat-add{margin:0}
@@ -219,7 +222,8 @@ body.mat-dragging,body.mat-dragging *{cursor:grabbing!important;user-select:none
 .mat-head{padding-left:8px}
 .mat-toggle{flex:1;min-width:0;display:flex;align-items:center;gap:10px;border:0;background:none;font:inherit;color:var(--ink);text-align:left;padding:4px 8px;border-radius:8px;cursor:pointer}
 .mat-toggle:hover{background:var(--hover)}
-.mat-toggle b{font-weight:600}
+.mat-toggle b{font-weight:600;white-space:nowrap}
+.mat-toggle .mat-sum{flex:1;min-width:0}
 .mat-toggle .chev{width:16px;height:16px;flex:none;fill:none;stroke:var(--muted);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .18s}
 .doc.mat.open .mat-toggle .chev{transform:rotate(90deg)}
 .mat-sum{font-size:12px;color:var(--muted);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -488,6 +492,7 @@ pre.sample{margin:0;font-family:var(--f-mono);font-size:11.5px;background:var(--
   .mat-row:has(.mat-drag){gap:4px!important}
   .mat-list{padding:8px 6px 10px}
   .mat-head .mat-sum{display:none}
+  .mat-toggle b{white-space:normal}
   .edbar{gap:6px}
   .edbar .btn{padding-left:12px;padding-right:12px}
   .edbar .btn.danger .lbl{display:none}
@@ -625,7 +630,7 @@ function splitRecs(text){
   if(!m) return {body:t.replace(/\s+$/,''), recs:''};
   return {body:t.slice(0,m.index).replace(/\s+$/,''), recs:t.slice(m.index+m[0].length).replace(/^\s*\n/,'').replace(/\s+$/,'')};
 }
-const allText = o => (o.prep||'') + '\n' + (o.body||'') + '\n' + (o.mat||'') + '\n' + (o.recs||'');
+const allText = o => (o.body||'') + '\n' + (o.mat||'') + '\n' + (o.recs||'');
 const hasPrepBox = o => o.type==='quirurgica' || !!(o.prep&&o.prep.trim());
 const hasMatBox = o => o.type==='quirurgica' || !!(o.mat&&o.mat.trim());
 /* material: one slot per line; optional default quantity as trailing «x2» */
@@ -726,7 +731,7 @@ function matText(){
   return keys.map(k=>`${k}:\n`+r.filter(x=>x.s===k).map(line).join('\n')).join('\n\n');
 }
 function matRowSync(row){ const i=row.querySelector('.mat-q input'); if(i) row.classList.toggle('on', Number(i.value)>0); matSummary(); }
-function matFit(){ if(CSS.supports && CSS.supports('field-sizing','content')) return; document.querySelectorAll('#matList textarea.mat-n').forEach(t=>{ t.style.height='auto'; t.style.height=t.scrollHeight+'px'; }); }
+function matFit(){ if(CSS.supports && CSS.supports('field-sizing','content')) return; document.querySelectorAll('#matList textarea.mat-n, #prepList textarea.mat-n').forEach(t=>{ t.style.height='auto'; t.style.height=t.scrollHeight+'px'; }); }
 /* drag & drop reordering (mouse and touch), also across sections */
 let MATDRAG=null;
 document.addEventListener('pointerdown', ev=>{
@@ -748,6 +753,59 @@ document.addEventListener('pointermove', ev=>{
 });
 const endDrag=()=>{ if(!MATDRAG) return; MATDRAG.row.classList.remove('dragging'); document.body.classList.remove('mat-dragging'); MATDRAG=null; matSecSync(); matSummary(); saveDocs(); };
 document.addEventListener('pointerup', endDrag); document.addEventListener('pointercancel', endDrag);
+/* ---------- patient preparation: fixed informative sections (like the material sections) ---------- */
+const PREP_SECS=['ANESTESIA','PROFILAXIS ANTIBIÓTICA','POSICIÓN','OTROS'];
+const PREP_JUNK=['{{Anestesia: General | Raquídea | Local | Local con sedación}}','{{Profilaxis antibiótica}}','{{Posición}}','{{Otros}}'];
+function prepFlatten(line){
+  PREP_JUNK.forEach(j=>{ line=line.split(j).join(''); });
+  const only=line.match(/^\s*\{\{([^{}:|]+?)\*?\s*:\s*([^{}]*)\}\}\s*\.?\s*$/);
+  if(only) return only[2].split('|').map(x=>x.trim()).filter(Boolean);
+  const t=line.replace(/\{\{([^{}:|]+?)\*?\s*:\s*([^{}]*)\}\}/g,(m,l,o)=>o.split('|').map(x=>x.trim()).filter(Boolean).join(' / ')).replace(/\{\{[^{}]*\}\}/g,'').replace(/\(\s*\)/g,'').replace(/\s{2,}/g,' ').trim();
+  return t && !/^[.,;:\s]*$/.test(t) ? [t] : [];
+}
+function parsePrep(src){
+  const rows=[]; let sec='OTROS';
+  String(src||'').replace(/\[\[|\]\]/g,'').split('\n').forEach(raw=>{
+    let l=raw.replace(/^\s*(?:[-•*·]\s*)?/,'').trim(); if(!l) return;
+    const m=l.match(/^([A-ZÁÉÍÓÚÜÑ][A-ZÁÉÍÓÚÜÑ0-9 ,./()+-]{1,40}):\s*(.*)$/);
+    if(m){ sec=m[1].trim(); l=m[2]; if(!l) return; }
+    prepFlatten(l).forEach(n=>rows.push({s:sec,n}));
+  });
+  return rows;
+}
+function prepOrder(rows){ const o=[...PREP_SECS]; rows.forEach(r=>{ if(!o.includes(r.s)) o.splice(o.length-1,0,r.s); }); return o; }
+const prepSource = rows => prepOrder(rows).map(k=>`${k}:`+rows.filter(r=>r.s===k&&r.n).map(r=>'\n'+r.n).join('')).join('\n\n');
+function prepText(){
+  const rows=readPrep().filter(r=>r.n);
+  return prepOrder(rows).map(k=>{ const it=rows.filter(r=>r.s===k); if(!it.length) return ''; return it.length===1 ? `${k}: ${it[0].n}` : `${k}:\n`+it.map(r=>'- '+r.n).join('\n'); }).filter(Boolean).join('\n\n');
+}
+function prepRowHTML(r){
+  if(!state.canWrite) return `<div class="mat-row pr on"><span class="mat-n ro" data-n="${esc(r.n||'')}">${esc(r.n||'')}</span></div>`;
+  return `<div class="mat-row pr on"><textarea class="mat-n" rows="1" placeholder="Escribe aquí" aria-label="Preparación" spellcheck="true">${esc(r.n||'')}</textarea><span class="mat-acts"><button type="button" class="mat-del" data-action="prep-del" aria-label="Quitar" title="Quitar">×</button></span></div>`;
+}
+function prepSecHTML(k){ return `<div class="mat-sec" data-s="${esc(k)}"><span>${esc(secLabel(k))}</span>${state.canWrite?`<button type="button" class="mat-sec-add" data-action="prep-add" title="Añadir en ${esc(secLabel(k))}">+ Añadir</button>`:''}</div>`; }
+const PREP_EMPTY='<div class="prep-empty">—</div>';
+function renderPrep(rows){
+  const box=$('#prepList'); if(!box) return;
+  box.innerHTML=prepOrder(rows).map(k=>{ const it=rows.filter(r=>r.s===k); return prepSecHTML(k)+(it.length?it.map(prepRowHTML).join(''):PREP_EMPTY); }).join('')
+    +(state.canWrite?`<div class="mat-foot"><span class="sp"></span><button type="button" class="btn sm" id="prepSave" data-action="prep-save" hidden>${ico('check')}Guardar en la plantilla</button></div>`:'');
+  setTimeout(matFit,0); prepSync();
+}
+function readPrep(){
+  let sec='OTROS'; const out=[];
+  [...document.querySelectorAll('#prepList > .mat-sec, #prepList > .mat-row')].forEach(el=>{
+    if(el.classList.contains('mat-sec')){ sec=el.dataset.s; return; }
+    const e=el.querySelector('.mat-n'); out.push({s:sec, n:(e.tagName==='TEXTAREA'?e.value:(e.dataset.n||'')).trim()});
+  });
+  return out;
+}
+function prepSync(){
+  const rows=readPrep(), o=state.items.get(state.currentId);
+  const ps=$('#prepSum'); if(ps){ const a=rows.find(r=>r.s==='ANESTESIA'&&r.n); ps.textContent = a ? '· Anestesia: '+a.n : (rows.some(r=>r.n)?'':'· sin datos'); }
+  const sv=$('#prepSave'); if(sv && o) sv.hidden = !state.canWrite || prepSource(rows.filter(r=>r.n))===prepSource(parsePrep(o.prep));
+  document.querySelectorAll('#prepList > .mat-sec').forEach(h=>{ const nx=h.nextElementSibling; const has=nx && nx.classList.contains('mat-row'); const ph=nx && nx.classList.contains('prep-empty'); if(!has && !ph) h.insertAdjacentHTML('afterend', PREP_EMPTY); if(has){ let x=nx; while(x && x.classList.contains('mat-row')) x=x.nextElementSibling; } });
+  document.querySelectorAll('#prepList > .prep-empty').forEach(ph=>{ const nx=ph.nextElementSibling; if(nx && nx.classList.contains('mat-row')) ph.remove(); });
+}
 function joinMulti(arr){ if(!arr||!arr.length) return ''; if(arr.length===1) return arr[0]; return arr.slice(0,-1).join(', ')+' y '+arr[arr.length-1]; }
 function fillGap(f, s, vals){
   if(!f || !f.options || !hasGap(s)) return s;
@@ -1055,7 +1113,7 @@ function renderDetail(o){
     </article>`:''}
     ${hasPrep?`<article class="doc prep${state.prepOpen?' open':''}">
       <div class="doc-head mat-head"><button type="button" class="mat-toggle" data-action="prep-toggle" aria-expanded="${!!state.prepOpen}" aria-controls="prepBody"><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg><span class="dot"></span><b>Preparación del paciente</b><span class="mat-sum" id="prepSum"></span></button>${copyPrep}</div>
-      <div id="prepBody" ${state.prepOpen?'':'hidden'}><div class="doc-text" id="preview-prep" data-part="prep" role="textbox" aria-multiline="true" aria-label="Preparación del paciente, editable" spellcheck="true" data-ph="Anestesia, profilaxis antibiótica, posición…"></div></div>
+      <div id="prepBody" ${state.prepOpen?'':'hidden'}><div class="mat-list prep-list" id="prepList" aria-label="Preparación del paciente"></div></div>
     </article>`:''}
     <article class="doc t-${esc(o.type)}">
       <div class="doc-head"><span class="dot"></span><b>${o.type==='quirurgica'?'Protocolo quirúrgico':hasRecs?'Informe':esc(TYPES[o.type]?.label||'Texto')}</b><span class="sp"></span>${copyBody}</div>
@@ -1070,7 +1128,7 @@ function renderDetail(o){
   const saved = state.docs[o.id] && state.docs[o.id].sig===contentSig(o) ? state.docs[o.id] : null;
   const p=$('#preview'); p.innerHTML = saved ? saved.body : docHTML(o.body,'opt:'); makeEditable(p);
   const r=$('#preview-recs'); if(r){ r.innerHTML = saved && saved.recs!=null ? saved.recs : docHTML(o.recs,'ropt:'); makeEditable(r); }
-  const pp=$('#preview-prep'); if(pp){ pp.innerHTML = saved && saved.prep!=null ? saved.prep : docHTML(o.prep||'','popt:'); makeEditable(pp); }
+  if($('#prepList')) renderPrep(saved && Array.isArray(saved.prep) ? saved.prep : parsePrep(o.prep));
   if($('#matList')) renderMat(saved && Array.isArray(saved.mat) ? saved.mat : parseMat(o.mat));
   const nBtn=1+(hasMat?1:0)+(hasPrep?1:0)+(hasRecs?1:0), ic=nBtn>2?'':ico('copy');
   $('#copybar').dataset.n=nBtn;
@@ -1083,14 +1141,13 @@ function liveMarks(){ return [...document.querySelectorAll('.doc-text mark.fld')
 function refreshDoc(dirty){
   const n=new Set(liveMarks().filter(m=>m.classList.contains('hole')).map(m=>m.dataset.k)).size;
   const el=$('#pending'); if(el){ el.textContent = n ? `Quedan ${n} hueco${n===1?'':'s'}` : 'Todo relleno'; el.classList.toggle('done', !n); }
-  const ps=$('#prepSum'); if(ps){ const k=new Set(liveMarks().filter(m=>m.classList.contains('hole') && m.closest('#preview-prep')).map(m=>m.dataset.k)).size; ps.textContent = k ? `· ${k} hueco${k===1?'':'s'} por rellenar` : '· completa'; }
   document.querySelectorAll('.doc-text .opt-seg').forEach(sg=>{ const t=sg.querySelector(':scope > .opt-tog'); if(t) t.title = sg.classList.contains('off') ? 'Incluir este paso' : 'Quitar este paso'; });
   const rb=$('#btnReset'); if(rb && dirty!==undefined) rb.classList.toggle('dirty', !!dirty);
 }
 function saveDocs(){
   const o=state.items.get(state.currentId); if(!o) return;
-  const p=$('#preview'), r=$('#preview-recs'), pp=$('#preview-prep');
-  state.docs[o.id]={sig:contentSig(o), body:p?p.innerHTML:'', recs:r?r.innerHTML:null, prep:pp?pp.innerHTML:null, mat:$('#matList')?readMat():null};
+  const p=$('#preview'), r=$('#preview-recs');
+  state.docs[o.id]={sig:contentSig(o), body:p?p.innerHTML:'', recs:r?r.innerHTML:null, prep:$('#prepList')?readPrep():null, mat:$('#matList')?readMat():null};
   refreshDoc(true);
 }
 function setMarkValue(mk, v){
@@ -1176,8 +1233,9 @@ function finishMulti(){
 async function copyPart(part){
   const o=state.items.get(state.currentId); if(!o) return;
   if(part==='recs' && !(o.recs&&o.recs.trim())) return;
-  const el = part==='recs' ? $('#preview-recs') : part==='prep' ? $('#preview-prep') : $('#preview');
-  const txt = part==='mat' ? matText() : serializeDoc(el);
+  const el = part==='recs' ? $('#preview-recs') : $('#preview');
+  const txt = part==='mat' ? matText() : part==='prep' ? prepText() : serializeDoc(el);
+  if(part==='prep' && !txt.trim()){ toast('La preparación está vacía'); return; }
   if(part==='mat' && !txt.trim()){ toast(state.canWrite?'Pon la cantidad en algún material':'Ningún material tiene cantidad'); const q=document.querySelector('.mat-q input'); if(q) q.focus(); return; }
   const ok=await copyText(txt, part==='recs'?'Recomendaciones copiadas':part==='mat'?'Material copiado':part==='prep'?'Preparación copiada':(o.type==='quirurgica'?'Protocolo copiado':o.recs?'Informe copiado':'Texto copiado'));
   if(ok && state.canWrite){ patchItem(o.id,{uses:(o.uses||0)+1,lastUsed:nowISO()}).then(()=>renderList()).catch(()=>{}); }
@@ -1268,13 +1326,13 @@ function edSource(part){
 function edBlock(part, title, src, hint){
   return `<section class="ed-block" data-part="${part}">
     <div class="ed-head"><h2>${title}</h2>${hint?`<span class="hint">${hint}</span>`:''}</div>
-    <div class="ed-tools" role="toolbar" aria-label="Herramientas: ${title}" ${part==='mat'?'hidden data-never':''}>
+    <div class="ed-tools" role="toolbar" aria-label="Herramientas: ${title}" ${part==='mat'||part==='prep'?'hidden data-never':''}>
       <button type="button" class="tool" data-tool="text" data-part="${part}" title="Un hueco para escribir (lo que en papel sería una X)"><span class="sw k-text"></span>Hueco para escribir</button>
       <button type="button" class="tool" data-tool="choice" data-part="${part}" title="Elegir entre varias opciones (lo que en papel sería «a / b»)"><span class="sw k-choice"></span>Opciones a elegir</button>
       <button type="button" class="tool" data-tool="date" data-part="${part}" title="Una fecha"><span class="sw k-date"></span>Fecha</button>
       <button type="button" class="tool" data-tool="opt" data-part="${part}" title="Un paso que solo se copia si lo incluyes"><span class="sw k-opt"></span><span class="lbl-opt">Paso opcional</span></button>
     </div>
-    <div class="ed-text" id="ed-${part}" data-part="${part}" spellcheck="true" role="textbox" aria-multiline="true" aria-label="${title}" data-ph="${part==='body'?'Escribe o pega aquí el texto de la plantilla, tal como quieres que se copie.':part==='mat'?'Un material por línea. Los títulos en mayúsculas con dos puntos («SUTURAS:») crean apartados; si no pones ninguno, se reparten solos según el abordaje. Por ejemplo:\nTrócar de 5 mm x2\nEndobolsa x1\nPenrose\n(«x2» al final = cantidad ya puesta; sin número, se rellena en cada paciente; «?» al final = dudoso, abrir solo si hace falta)':part==='prep'?'ANESTESIA: …\nPROFILAXIS ANTIBIÓTICA: …\nPOSICIÓN: …':'Opcional. Escribe o pega las recomendaciones para el paciente.'}">${edHTML(src)}</div>
+    <div class="ed-text" id="ed-${part}" data-part="${part}" spellcheck="true" role="textbox" aria-multiline="true" aria-label="${title}" data-ph="${part==='body'?'Escribe o pega aquí el texto de la plantilla, tal como quieres que se copie.':part==='mat'?'Un material por línea. Los títulos en mayúsculas con dos puntos («SUTURAS:») crean apartados; si no pones ninguno, se reparten solos según el abordaje. Por ejemplo:\nTrócar de 5 mm x2\nEndobolsa x1\nPenrose\n(«x2» al final = cantidad ya puesta; sin número, se rellena en cada paciente; «?» al final = dudoso, abrir solo si hace falta)':part==='prep'?'Texto informativo, sin campos. Por ejemplo:\nANESTESIA:\nGeneral + local preincisional\n\nPROFILAXIS ANTIBIÓTICA:\nCefuroxima 1,5 g\n\nPOSICIÓN:\nDecúbito supino\n\nOTROS:':'Opcional. Escribe o pega las recomendaciones para el paciente.'}">${edHTML(src)}</div>
     <textarea class="inp body code" id="ed-${part}-code" spellcheck="false" hidden></textarea>
   </section>`;
 }
@@ -1304,7 +1362,7 @@ function renderEditor(o){
         <li>Pulsa cualquier campo rosa para cambiarlo o quitarlo. Los títulos en mayúsculas («TÉCNICA:») se verán en negrita.</li>
       </ol>
       ${edBlock('mat', 'Material quirúrgico', d.mat||'', 'Opcional · un material por línea; «x2» pone la cantidad y «?» lo marca como dudoso')}
-      ${edBlock('prep', 'Preparación del paciente', d.prep||'', 'Opcional · anestesia, profilaxis antibiótica, posición y otros; cuadro aparte en las hojas quirúrgicas')}
+      ${edBlock('prep', 'Preparación del paciente', d.prep||'', 'Informativo · debajo de cada apartado (ANESTESIA:, PROFILAXIS ANTIBIÓTICA:, POSICIÓN:, OTROS:) una línea por elemento')}
       ${edBlock('body', 'Texto del informe', d.body)}
       ${edBlock('recs', 'Recomendaciones al alta', d.recs, 'Opcional · se muestran y copian en un cuadro aparte')}
       <div id="edSyntax" hidden>${syntaxHelp()}</div>
@@ -1749,6 +1807,13 @@ document.addEventListener('click', async ev=>{
       break; }
     case 'reset': { const o=state.items.get(state.currentId); if(!o) break; closeChoice(); delete state.docs[o.id]; renderDetail(o); $('#docPage') && ($('#docPage').scrollTop=0); toast('Plantilla reiniciada'); break; }
     case 'copy': copyPart(b.dataset.part||'body'); break;
+    case 'prep-add': { if(!state.canWrite) break; const sec=b.closest('.mat-sec'); let x=sec; while(x.nextElementSibling && (x.nextElementSibling.classList.contains('mat-row')||x.nextElementSibling.classList.contains('prep-empty'))) x=x.nextElementSibling; x.insertAdjacentHTML('afterend', prepRowHTML({n:''})); const row=x.nextElementSibling; prepSync(); row.querySelector('.mat-n').focus(); saveDocs(); break; }
+    case 'prep-del': { if(!state.canWrite) break; b.closest('.mat-row').remove(); prepSync(); saveDocs(); break; }
+    case 'prep-save': { if(!state.canWrite) break; const o=state.items.get(state.currentId); if(!o) break; const rows=readPrep().filter(r=>r.n); const next={...o, prep:prepSource(rows), updatedAt:nowISO()};
+      b.disabled=true;
+      try{ const keep=state.docs[o.id]; await saveItem(next); if(keep){ keep.sig=contentSig(next); keep.prep=rows; } state.sig=detailSig(next); prepSync(); toast('Preparación guardada en la plantilla'); }
+      catch(x){ toast(dbErr(x)); } finally{ b.disabled=false; }
+      break; }
     case 'prep-toggle': { state.prepOpen=!state.prepOpen; const art=b.closest('.doc.prep'); art.classList.toggle('open',state.prepOpen); b.setAttribute('aria-expanded',state.prepOpen); $('#prepBody').hidden=!state.prepOpen; break; }
     case 'mat-toggle': { state.matOpen=!state.matOpen; const art=b.closest('.doc.mat'); art.classList.toggle('open',state.matOpen); b.setAttribute('aria-expanded',state.matOpen); $('#matBody').hidden=!state.matOpen; matFit(); break; }
     case 'mat-flag': { if(!state.canWrite) break; const row=b.closest('.mat-row'); const on=row.dataset.d!=='1'; row.dataset.d=on?'1':''; row.classList.toggle('duda',on); b.setAttribute('aria-pressed',on); b.title=on?'Quitar la duda':'Marcar como dudoso: abrir solo si hace falta'; matSummary(); saveDocs(); break; }
@@ -1803,6 +1868,7 @@ document.addEventListener('input', ev=>{
     }
     saveDocs(); return;
   }
+  if(t.closest && t.closest('#prepList')){ if(t.classList.contains('mat-n')) matFit(); prepSync(); saveDocs(); return; }
   if(t.closest && t.closest('#matList')){ const row=t.closest('.mat-row'); if(row) matRowSync(row); if(t.classList.contains('mat-n')) matFit(); saveDocs(); return; }
   if(t.id==='hmQ'){ homeQ=t.value; homeSel=0; updateHomeResults(); return; }
   if(t.id==='q'){ state.q=t.value; renderList(); return; }
@@ -1845,6 +1911,7 @@ document.addEventListener('keydown', ev=>{
   const inDoc = ev.target.closest && ev.target.closest('.doc-text');
   if(inDoc && ev.key==='Tab'){ ev.preventDefault(); nextHole(ev.shiftKey?-1:1); return; }
   if(state.canWrite && ev.altKey && (ev.key==='ArrowUp'||ev.key==='ArrowDown') && ev.target.closest && ev.target.closest('#matList .mat-row')){ ev.preventDefault(); const row=ev.target.closest('.mat-row'); const sib=ev.key==='ArrowUp'?row.previousElementSibling:row.nextElementSibling; const ok=sib && (sib.classList.contains('mat-row') || (sib.classList.contains('mat-sec') && (ev.key==='ArrowDown' || sib.previousElementSibling))); if(ok){ if(ev.key==='ArrowUp') sib.before(row); else sib.after(row); ev.target.focus(); matSecSync(); matSummary(); saveDocs(); } return; }
+  if(state.canWrite && ev.target.classList && ev.target.classList.contains('mat-n') && ev.key==='Enter' && ev.target.closest('#prepList')){ ev.preventDefault(); const row=ev.target.closest('.mat-row'); row.insertAdjacentHTML('afterend', prepRowHTML({n:''})); row.nextElementSibling.querySelector('.mat-n').focus(); prepSync(); saveDocs(); return; }
   if(state.canWrite && ev.target.classList && ev.target.classList.contains('mat-n') && ev.key==='Enter'){ ev.preventDefault(); const row=ev.target.closest('.mat-row'); row.insertAdjacentHTML('afterend', matRowHTML({n:'',q:'1'})); row.nextElementSibling.querySelector('.mat-n').focus(); saveDocs(); return; }
   if(ev.target.id==='hmQ'){
     const r=homeMatches();

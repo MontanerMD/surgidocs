@@ -55,6 +55,32 @@ export function separarPreparacion(o) {
   return true;
 }
 
+/* 2026-10-22 · La preparación pasa a ser informativa: apartados fijos y elementos de texto, sin campos */
+const PREP_SECS = ['ANESTESIA', 'PROFILAXIS ANTIBIÓTICA', 'POSICIÓN', 'OTROS'];
+const PREP_JUNK = Object.values(PREP_DEFAULT).concat(['{{Otros}}']);
+function prepFlatten(line) {
+  PREP_JUNK.forEach(j => { line = line.split(j).join(''); });
+  const only = line.match(/^\s*\{\{([^{}:|]+?)\*?\s*:\s*([^{}]*)\}\}\s*\.?\s*$/);
+  if (only) return only[2].split('|').map(x => x.trim()).filter(Boolean);
+  const t = line.replace(/\{\{([^{}:|]+?)\*?\s*:\s*([^{}]*)\}\}/g, (m, l, o) => o.split('|').map(x => x.trim()).filter(Boolean).join(' / '))
+    .replace(/\{\{[^{}]*\}\}/g, '').replace(/\(\s*\)/g, '').replace(/\s{2,}/g, ' ').trim();
+  return t && !/^[.,;:\s]*$/.test(t) ? [t] : [];
+}
+export function normalizarPreparacion(o) {
+  if (!o || o.prep == null || o.prep === '') return false;
+  const rows = []; let sec = 'OTROS';
+  String(o.prep).replace(/\[\[|\]\]/g, '').split('\n').forEach(raw => {
+    let l = raw.replace(/^\s*(?:[-•*·]\s*)?/, '').trim(); if (!l) return;
+    const m = l.match(/^([A-ZÁÉÍÓÚÜÑ][A-ZÁÉÍÓÚÜÑ0-9 ,./()+-]{1,40}):\s*(.*)$/);
+    if (m) { sec = m[1].trim(); l = m[2]; if (!l) return; }
+    prepFlatten(l).forEach(n => rows.push({ s: sec, n }));
+  });
+  const order = [...PREP_SECS]; rows.forEach(r => { if (!order.includes(r.s)) order.splice(order.length - 1, 0, r.s); });
+  const out = order.map(k => `${k}:` + rows.filter(r => r.s === k).map(r => '\n' + r.n).join('')).join('\n\n');
+  if (out === o.prep) return false;
+  o.prep = out; return true;
+}
+
 export function inferirAbordaje(o) {
   if (!o || o.type !== 'quirurgica') return '';
   const t = String(o.title || '').toLowerCase();
@@ -69,5 +95,6 @@ export const MIGRATIONS = [
   { id: '2026-10-20-material-dudoso', run: items => { const o = items['sd-apendicectomia-laparoscopica']; if (o && o.mat === MAT_APENDICECTOMIA) o.mat = MAT_APENDICECTOMIA_2; } },
   { id: '2026-10-20-abordaje', run: items => { for (const o of Object.values(items)) { if (o && !o.approach) { const a = inferirAbordaje(o); if (a) o.approach = a; } } } },
   { id: '2026-10-21-desde-intervencion', run: items => { for (const o of Object.values(items)) { if (o && o.recs) o.recs = desdeIntervencion(o.recs); } } },
-  { id: '2026-10-22-preparacion-paciente', run: items => { for (const o of Object.values(items)) separarPreparacion(o); } }
+  { id: '2026-10-22-preparacion-paciente', run: items => { for (const o of Object.values(items)) separarPreparacion(o); } },
+  { id: '2026-10-22-preparacion-informativa', run: items => { for (const o of Object.values(items)) normalizarPreparacion(o); } }
 ];
