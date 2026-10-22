@@ -214,7 +214,8 @@ body.mat-dragging,body.mat-dragging *{cursor:grabbing!important;user-select:none
 .mat-foot .sp{flex:1}
 .mat-drag-i{font-size:13px;color:var(--muted)}
 @media (hover:none){ .mat-flag,.mat-drag{opacity:.8} }
-.doc.mat:not(.open) .mat-head{border-bottom-color:transparent}
+.doc.mat:not(.open) .mat-head,.doc.prep:not(.open) .mat-head{border-bottom-color:transparent}
+.doc.prep.open .mat-toggle .chev{transform:rotate(90deg)}
 .mat-head{padding-left:8px}
 .mat-toggle{flex:1;min-width:0;display:flex;align-items:center;gap:10px;border:0;background:none;font:inherit;color:var(--ink);text-align:left;padding:4px 8px;border-radius:8px;cursor:pointer}
 .mat-toggle:hover{background:var(--hover)}
@@ -902,7 +903,7 @@ function renderStatus(){
 function setMain(html){ $('#main').innerHTML=`<div class="page"><div class="page-in">${html}</div></div>`; }
 function go(view, id=null){
   state.view=view; state.currentId=id; state.hlKey=null;
-  if(view==='detail' && id){ pushRecent(id); state.matOpen=false; }
+  if(view==='detail' && id){ pushRecent(id); state.matOpen=false; state.prepOpen=false; }
   if(view!=='list') { homeQ=''; homeSel=0; }
   document.body.dataset.view=view;
   $('#navList').setAttribute('aria-current', view==='list');
@@ -1052,9 +1053,9 @@ function renderDetail(o){
         <p class="mat-hint" id="matHint"></p>
       </div>
     </article>`:''}
-    ${hasPrep?`<article class="doc prep">
-      <div class="doc-head"><span class="dot"></span><b>Preparación del paciente</b><span class="sp"></span>${copyPrep}</div>
-      <div class="doc-text" id="preview-prep" data-part="prep" role="textbox" aria-multiline="true" aria-label="Preparación del paciente, editable" spellcheck="true" data-ph="Anestesia, profilaxis antibiótica, posición…"></div>
+    ${hasPrep?`<article class="doc prep${state.prepOpen?' open':''}">
+      <div class="doc-head mat-head"><button type="button" class="mat-toggle" data-action="prep-toggle" aria-expanded="${!!state.prepOpen}" aria-controls="prepBody"><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg><span class="dot"></span><b>Preparación del paciente</b><span class="mat-sum" id="prepSum"></span></button>${copyPrep}</div>
+      <div id="prepBody" ${state.prepOpen?'':'hidden'}><div class="doc-text" id="preview-prep" data-part="prep" role="textbox" aria-multiline="true" aria-label="Preparación del paciente, editable" spellcheck="true" data-ph="Anestesia, profilaxis antibiótica, posición…"></div></div>
     </article>`:''}
     <article class="doc t-${esc(o.type)}">
       <div class="doc-head"><span class="dot"></span><b>${o.type==='quirurgica'?'Protocolo quirúrgico':hasRecs?'Informe':esc(TYPES[o.type]?.label||'Texto')}</b><span class="sp"></span>${copyBody}</div>
@@ -1082,6 +1083,7 @@ function liveMarks(){ return [...document.querySelectorAll('.doc-text mark.fld')
 function refreshDoc(dirty){
   const n=new Set(liveMarks().filter(m=>m.classList.contains('hole')).map(m=>m.dataset.k)).size;
   const el=$('#pending'); if(el){ el.textContent = n ? `Quedan ${n} hueco${n===1?'':'s'}` : 'Todo relleno'; el.classList.toggle('done', !n); }
+  const ps=$('#prepSum'); if(ps){ const k=new Set(liveMarks().filter(m=>m.classList.contains('hole') && m.closest('#preview-prep')).map(m=>m.dataset.k)).size; ps.textContent = k ? `· ${k} hueco${k===1?'':'s'} por rellenar` : '· completa'; }
   document.querySelectorAll('.doc-text .opt-seg').forEach(sg=>{ const t=sg.querySelector(':scope > .opt-tog'); if(t) t.title = sg.classList.contains('off') ? 'Incluir este paso' : 'Quitar este paso'; });
   const rb=$('#btnReset'); if(rb && dirty!==undefined) rb.classList.toggle('dirty', !!dirty);
 }
@@ -1115,7 +1117,7 @@ function focusMark(mk){
   else selectNode(mk);
 }
 function nextHole(dir){
-  const holes=liveMarks().filter(m=>m.classList.contains('hole'));
+  const holes=liveMarks().filter(m=>m.classList.contains('hole') && !m.closest('[hidden]'));
   if(!holes.length){ toast('No quedan huecos por rellenar'); return; }
   const sel=window.getSelection(); const anchor=sel.rangeCount?sel.getRangeAt(0).startContainer:null;
   let pick=null;
@@ -1747,6 +1749,7 @@ document.addEventListener('click', async ev=>{
       break; }
     case 'reset': { const o=state.items.get(state.currentId); if(!o) break; closeChoice(); delete state.docs[o.id]; renderDetail(o); $('#docPage') && ($('#docPage').scrollTop=0); toast('Plantilla reiniciada'); break; }
     case 'copy': copyPart(b.dataset.part||'body'); break;
+    case 'prep-toggle': { state.prepOpen=!state.prepOpen; const art=b.closest('.doc.prep'); art.classList.toggle('open',state.prepOpen); b.setAttribute('aria-expanded',state.prepOpen); $('#prepBody').hidden=!state.prepOpen; break; }
     case 'mat-toggle': { state.matOpen=!state.matOpen; const art=b.closest('.doc.mat'); art.classList.toggle('open',state.matOpen); b.setAttribute('aria-expanded',state.matOpen); $('#matBody').hidden=!state.matOpen; matFit(); break; }
     case 'mat-flag': { if(!state.canWrite) break; const row=b.closest('.mat-row'); const on=row.dataset.d!=='1'; row.dataset.d=on?'1':''; row.classList.toggle('duda',on); b.setAttribute('aria-pressed',on); b.title=on?'Quitar la duda':'Marcar como dudoso: abrir solo si hace falta'; matSummary(); saveDocs(); break; }
     case 'mat-save': { if(!state.canWrite) break; const o=state.items.get(state.currentId); if(!o) break; const rows=readMat(); const next={...o, mat:matSource(rows), updatedAt:nowISO()};
