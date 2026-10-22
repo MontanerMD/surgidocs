@@ -1,4 +1,4 @@
-# SurgiDocs · ByAMS
+# SURGIDOCS · By Andrés Montaner
 
 Web-app para la consulta (pensada para escritorio y adaptada a móvil) que permite gestionar, rellenar y copiar plantillas clínicas de **Cirugía General y del Aparato Digestivo**: informes de urgencias, protocolos quirúrgicos, consulta y bloques reutilizables.
 
