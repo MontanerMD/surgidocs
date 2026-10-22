@@ -43,7 +43,10 @@ kbd{font-family:var(--f-mono);font-size:10.5px;line-height:1;padding:3px 5px;bor
 /* one neutral colour everywhere; types and boxes are told apart by their icon */
 .t-urgencias,.t-quirurgica,.t-consulta,.t-comun,.doc.recs,.doc.mat{--t:var(--line2)}
 .dot{width:15px;height:15px;flex:none;display:inline-block;background:currentColor;color:var(--muted);opacity:.9;-webkit-mask:var(--ti,var(--i-com)) center/contain no-repeat;mask:var(--ti,var(--i-com)) center/contain no-repeat}
-[aria-current="true"] > .dot,.navrow[aria-current="true"] .dot{color:var(--accent-text)}
+:root{--c-urg:#e5533d;--c-qx:#4359c4;--c-cex:#9a86e0;--c-fav:#eab308}
+.t-urgencias{--ic:var(--c-urg)} .t-quirurgica{--ic:var(--c-qx)} .t-consulta{--ic:var(--c-cex)}
+.dot{color:var(--ic,var(--muted))!important;opacity:1}
+.navrow.nav-fav .ico{color:var(--c-fav)!important}
 
 /* buttons */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;height:38px;padding:0 16px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink2);font-weight:600;font-size:13.5px;white-space:nowrap;transition:background .15s,border-color .15s,color .15s}
@@ -61,6 +64,7 @@ kbd{font-family:var(--f-mono);font-size:10.5px;line-height:1;padding:3px 5px;bor
 .btn[disabled]{opacity:.5;cursor:not-allowed}
 .btn kbd{border-color:currentColor;color:inherit;opacity:.7;background:transparent}
 .btn.fav[aria-pressed="true"]{color:var(--accent-text);border-color:var(--accent-line);background:var(--accent-soft)}
+.btn.fav .ico{color:var(--c-fav)}
 
 /* top bar */
 .topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--line)}
@@ -112,7 +116,7 @@ kbd{font-family:var(--f-mono);font-size:10.5px;line-height:1;padding:3px 5px;bor
 .item-title{font-size:13.5px;font-weight:600;color:var(--ink);line-height:1.3;overflow-wrap:anywhere}
 .item[aria-current="true"] .item-title{color:var(--accent-text)}
 .item-meta{font-size:11.5px;color:var(--muted)}
-.item .favmark{color:var(--accent);display:flex}
+.item .favmark{color:var(--c-fav);display:flex}
 .item .favmark .ico{width:14px;height:14px}
 .status{display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--faint);padding:6px 10px 0}
 .status i{width:13px;height:13px;flex:none;background:currentColor;-webkit-mask:var(--i-cloud) center/contain no-repeat;mask:var(--i-cloud) center/contain no-repeat}
@@ -177,7 +181,7 @@ select.inp{appearance:auto}
 .doc-head .sp{flex:1}
 .doc.recs{--ti:var(--i-recs)}
 .doc.mat{--ti:var(--i-mat)}
-.doc-head .dot{color:var(--ink2);width:16px;height:16px}
+.doc-head .dot{--muted:var(--ink2);width:16px;height:16px}
 .mat-list{display:flex;flex-direction:column;padding:10px 12px 12px}
 .mat-row{grid-template-columns:auto minmax(0,1fr) auto!important}
 .mat-row:has(.mat-drag){grid-template-columns:18px auto minmax(0,1fr) auto!important;gap:6px!important}
@@ -416,7 +420,7 @@ pre.sample{margin:0;font-family:var(--f-mono);font-size:11.5px;background:var(--
 .hm-types{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .hm-type{border:1px solid var(--line);background:var(--surface);border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
 .hm-type-h{display:flex;align-items:center;gap:10px;padding:14px 16px 10px;border:0;background:none;font:inherit;color:var(--ink);text-align:left;cursor:pointer;width:100%}
-.hm-type-h .dot{width:18px;height:18px;color:var(--ink2)}
+.hm-type-h .dot{width:18px;height:18px;--muted:var(--ink2)}
 .hm-type-h b{font-size:15px;font-weight:700;flex:1}
 .hm-type-h .n{font-size:12px;font-weight:700;color:var(--muted);background:var(--sunk);border-radius:999px;padding:2px 9px;font-variant-numeric:tabular-nums}
 .hm-type ul{list-style:none;margin:0;padding:0 8px 6px}
@@ -851,7 +855,7 @@ function filtered(){
 function renderChips(){
   const all=[...state.items.values()];
   const cnt=t=>t==='all'?all.length:t==='fav'?all.filter(o=>o.fav).length:all.filter(o=>o.type===t).length;
-  const rows=[['all','Todas','',ico('list')],['urgencias','Urgencias','t-urgencias','<span class="dot"></span>'],['quirurgica','Quirúrgicas','t-quirurgica','<span class="dot"></span>'],['consulta','Consulta','t-consulta','<span class="dot"></span>'],['comun','Campos comunes','t-comun','<span class="dot"></span>'],['fav','Favoritas','',ico('star')]]
+  const rows=[['all','Todas','',ico('list')],['urgencias','Urgencias','t-urgencias','<span class="dot"></span>'],['quirurgica','Quirúrgicas','t-quirurgica','<span class="dot"></span>'],['consulta','Consulta','t-consulta','<span class="dot"></span>'],['comun','Campos comunes','t-comun','<span class="dot"></span>'],['fav','Favoritas','nav-fav',ico('star')]]
     .filter(([k])=>['all','urgencias','quirurgica','fav'].includes(k)||cnt(k)>0);
   $('#typeNav').innerHTML=rows.map(([k,l,c,i])=>`<button class="navrow ${c}" data-action="type" data-v="${k}" aria-current="${state.type===k}">${i}<span>${l}</span><span class="n">${cnt(k)}</span></button>`).join('');
   $('#secChips').innerHTML=[['all','Todas'],...SECTIONS.map(s=>[s,s])].map(([k,l])=>`<button class="pill" data-action="sec" data-v="${k}" aria-pressed="${state.section===k}" ${k!=='all'?`title="${esc(SEC_NAMES[k])}"`:''}>${esc(l)}</button>`).join('');
