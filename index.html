@@ -180,6 +180,8 @@ select.inp{appearance:auto}
 .doc-head b{font-size:13px;font-weight:700;color:var(--ink)}
 .doc-head .sp{flex:1}
 .doc.recs{--ti:var(--i-recs)}
+.doc.prep{--ti:var(--i-prep)}
+:root{--i-prep:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='7' r='4'/%3E%3Cpath d='M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1'/%3E%3C/svg%3E");}
 .doc.mat{--ti:var(--i-mat)}
 .doc-head .dot{--muted:var(--ink2);width:16px;height:16px}
 .mat-list{display:flex;flex-direction:column;padding:10px 12px 12px}
@@ -473,6 +475,7 @@ pre.sample{margin:0;font-family:var(--f-mono);font-size:11.5px;background:var(--
   body[data-view="detail"] .copybar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:25;gap:8px;padding:10px max(16px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));background:var(--surface);border-top:1px solid var(--line)}
   .copybar .btn{flex:1;height:46px;white-space:normal;line-height:1.2;min-width:0;padding-left:8px;padding-right:8px}
   .copybar .btn:nth-child(3){font-size:12.5px}
+  .copybar[data-n="4"] .btn{font-size:12px;padding-left:4px;padding-right:4px}
   body[data-view="list"] .bottomnav{display:block;position:fixed;left:0;right:0;bottom:0;z-index:25;background:var(--surface);border-top:1px solid var(--line);padding:0 max(16px,env(safe-area-inset-right,0px)) env(safe-area-inset-bottom,0px) max(16px,env(safe-area-inset-left,0px))}
   .bottomnav .in{display:grid;grid-template-columns:repeat(3,1fr);height:var(--nav-h)}
   .bottomnav button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:0;background:none;font-size:11px;font-weight:600;color:var(--muted)}
@@ -621,7 +624,8 @@ function splitRecs(text){
   if(!m) return {body:t.replace(/\s+$/,''), recs:''};
   return {body:t.slice(0,m.index).replace(/\s+$/,''), recs:t.slice(m.index+m[0].length).replace(/^\s*\n/,'').replace(/\s+$/,'')};
 }
-const allText = o => (o.body||'') + '\n' + (o.mat||'') + '\n' + (o.recs||'');
+const allText = o => (o.prep||'') + '\n' + (o.body||'') + '\n' + (o.mat||'') + '\n' + (o.recs||'');
+const hasPrepBox = o => o.type==='quirurgica' || !!(o.prep&&o.prep.trim());
 const hasMatBox = o => o.type==='quirurgica' || !!(o.mat&&o.mat.trim());
 /* material: one slot per line; optional default quantity as trailing «x2» */
 /* ---------- surgical approach + material by sections ---------- */
@@ -844,7 +848,7 @@ function filtered(){
   if(state.type==='fav') arr=arr.filter(o=>o.fav);
   else if(state.type!=='all') arr=arr.filter(o=>o.type===state.type);
   if(state.section!=='all') arr=arr.filter(o=>o.section===state.section);
-  if(q){ const words=q.split(/\s+/); arr=arr.filter(o=>{ const hay=norm([o.title,(o.tags||[]).join(' '),o.section,TYPES[o.type]?.label,APPROACHES[o.approach]||'',o.body,o.mat,o.recs].join(' ')); return words.every(w=>hay.includes(w)); }); }
+  if(q){ const words=q.split(/\s+/); arr=arr.filter(o=>{ const hay=norm([o.title,(o.tags||[]).join(' '),o.section,TYPES[o.type]?.label,APPROACHES[o.approach]||'',o.prep,o.body,o.mat,o.recs].join(' ')); return words.every(w=>hay.includes(w)); }); }
   const by={
     recent:(a,b)=>String(b.updatedAt||'').localeCompare(String(a.updatedAt||'')),
     used:(a,b)=>(b.uses||0)-(a.uses||0) || a.title.localeCompare(b.title,'es'),
@@ -922,7 +926,7 @@ function homeMatches(){
   const q=norm(homeQ.trim()); if(!q) return [];
   const words=q.split(/\s+/);
   return [...state.items.values()].map(o=>{
-    const t=norm(o.title), tags=norm((o.tags||[]).join(' ')+' '+(o.section||'')+' '+(TYPES[o.type]?.label||'')), body=norm((o.body||'')+' '+(o.mat||'')+' '+(o.recs||''));
+    const t=norm(o.title), tags=norm((o.tags||[]).join(' ')+' '+(o.section||'')+' '+(TYPES[o.type]?.label||'')), body=norm((o.prep||'')+' '+(o.body||'')+' '+(o.mat||'')+' '+(o.recs||''));
     if(!words.every(w=>t.includes(w)||tags.includes(w)||body.includes(w))) return null;
     let s=0; words.forEach(w=>{ if(t.startsWith(w)) s+=6; else if(t.includes(w)) s+=4; else if(tags.includes(w)) s+=2; else s+=1; });
     return {o,s:s+Math.min(3,(o.uses||0)/10)+(o.fav?1:0)};
@@ -970,8 +974,8 @@ function renderWelcome(){
 function syntaxHelp(){
   return `<p class="syntax"><b>Cómo se escriben los campos.</b> <code>{{Edad}}</code> hueco de texto · <code>{{Lado: derecha | izquierda}}</code> opciones · <code>{{Hallazgos*: a | b | c}}</code> varias opciones · <code>{{Fiebre: Afebril | Fiebre de … ºC}}</code> la opción con «…» abre un hueco · <code>{{Fecha}}</code> calendario · <code>[[- Drenaje de Penrose…]]</code> paso opcional, solo se copia si se marca. Un mismo nombre de campo se rellena una sola vez.</p>`;
 }
-function detailSig(o){ return [o.id,o.title,o.type,o.section,(o.tags||[]).join(','),o.approach,o.body,o.mat,o.recs,o.fav,o.updatedAt].join('|'); }
-const contentSig = o => (o.body||'')+'\u0001'+(o.recs||'')+'\u0001'+(o.mat||'');
+function detailSig(o){ return [o.id,o.title,o.type,o.section,(o.tags||[]).join(','),o.approach,o.prep,o.body,o.mat,o.recs,o.fav,o.updatedAt].join('|'); }
+const contentSig = o => (o.body||'')+'\u0001'+(o.recs||'')+'\u0001'+(o.mat||'')+'\u0001'+(o.prep||'');
 let FMAP = {};   /* fields of the open template, by key */
 
 /* ---------- inline document: everything is filled inside the text ---------- */
@@ -1015,10 +1019,11 @@ function renderDetail(o){
   state.sig=detailSig(o);
   const fields=parseFields(allText(o));
   FMAP=Object.fromEntries(fields.map(f=>[f.key,f]));
-  const hasRecs=!!(o.recs&&o.recs.trim()), hasMat=hasMatBox(o);
+  const hasRecs=!!(o.recs&&o.recs.trim()), hasMat=hasMatBox(o), hasPrep=hasPrepBox(o);
   const tags=(o.tags||[]).filter(t=>t!=='SurgiDocs').slice(0,4).map(t=>`<span class="tg">${esc(t)}</span>`).join('');
   const w=state.canWrite;
   const copyBody=`<button class="btn sm primary" data-action="copy" data-part="body" title="Copiar (${KEY_COPY})">${ico('copy')}Copiar</button>`;
+  const copyPrep=`<button class="btn sm outline" data-action="copy" data-part="prep" title="Copiar la preparación del paciente">${ico('copy')}Copiar</button>`;
   const copyMat=`<button class="btn sm outline" data-action="copy" data-part="mat" title="Copiar el material quirúrgico">${ico('copy')}Copiar</button>`;
   const copyRecs=`<button class="btn sm outline" data-action="copy" data-part="recs" title="Copiar (${KEY_COPY_RECS})">${ico('copy')}Copiar</button>`;
   $('#main').innerHTML=`<div class="page" id="docPage"><div class="page-in doc-page">
@@ -1047,6 +1052,10 @@ function renderDetail(o){
         <p class="mat-hint" id="matHint"></p>
       </div>
     </article>`:''}
+    ${hasPrep?`<article class="doc prep">
+      <div class="doc-head"><span class="dot"></span><b>Preparación del paciente</b><span class="sp"></span>${copyPrep}</div>
+      <div class="doc-text" id="preview-prep" data-part="prep" role="textbox" aria-multiline="true" aria-label="Preparación del paciente, editable" spellcheck="true" data-ph="Anestesia, profilaxis antibiótica, posición…"></div>
+    </article>`:''}
     <article class="doc t-${esc(o.type)}">
       <div class="doc-head"><span class="dot"></span><b>${o.type==='quirurgica'?'Protocolo quirúrgico':hasRecs?'Informe':esc(TYPES[o.type]?.label||'Texto')}</b><span class="sp"></span>${copyBody}</div>
       <div class="doc-text" id="preview" data-part="body" role="textbox" aria-multiline="true" aria-label="Texto del informe, editable" spellcheck="true"></div>
@@ -1060,9 +1069,12 @@ function renderDetail(o){
   const saved = state.docs[o.id] && state.docs[o.id].sig===contentSig(o) ? state.docs[o.id] : null;
   const p=$('#preview'); p.innerHTML = saved ? saved.body : docHTML(o.body,'opt:'); makeEditable(p);
   const r=$('#preview-recs'); if(r){ r.innerHTML = saved && saved.recs!=null ? saved.recs : docHTML(o.recs,'ropt:'); makeEditable(r); }
+  const pp=$('#preview-prep'); if(pp){ pp.innerHTML = saved && saved.prep!=null ? saved.prep : docHTML(o.prep||'','popt:'); makeEditable(pp); }
   if($('#matList')) renderMat(saved && Array.isArray(saved.mat) ? saved.mat : parseMat(o.mat));
-  $('#copybar').innerHTML = (hasRecs||hasMat)
-    ? `<button class="btn primary" data-action="copy" data-part="body">${hasMat&&hasRecs?'':ico('copy')}${o.type==='quirurgica'?'Protocolo':'Informe'}</button>${hasMat?`<button class="btn outline" data-action="copy" data-part="mat">${hasRecs?'':ico('copy')}Material</button>`:''}${hasRecs?`<button class="btn outline" data-action="copy" data-part="recs" aria-label="Copiar recomendaciones al alta">${hasMat?'':ico('copy')}Recomen&shy;daciones</button>`:''}`
+  const nBtn=1+(hasMat?1:0)+(hasPrep?1:0)+(hasRecs?1:0), ic=nBtn>2?'':ico('copy');
+  $('#copybar').dataset.n=nBtn;
+  $('#copybar').innerHTML = nBtn>1
+    ? `${hasMat?`<button class="btn outline" data-action="copy" data-part="mat">${ic}Material</button>`:''}${hasPrep?`<button class="btn outline" data-action="copy" data-part="prep" aria-label="Copiar preparación del paciente">${ic}Prepara&shy;ción</button>`:''}<button class="btn primary" data-action="copy" data-part="body">${ic}${o.type==='quirurgica'?'Protocolo':'Informe'}</button>${hasRecs?`<button class="btn outline" data-action="copy" data-part="recs" aria-label="Copiar recomendaciones al alta">${ic}Recomen&shy;daciones</button>`:''}`
     : `<button class="btn primary" data-action="copy" data-part="body">${ico('copy')}Copiar texto</button>`;
   refreshDoc(!!saved);
 }
@@ -1075,8 +1087,8 @@ function refreshDoc(dirty){
 }
 function saveDocs(){
   const o=state.items.get(state.currentId); if(!o) return;
-  const p=$('#preview'), r=$('#preview-recs');
-  state.docs[o.id]={sig:contentSig(o), body:p?p.innerHTML:'', recs:r?r.innerHTML:null, mat:$('#matList')?readMat():null};
+  const p=$('#preview'), r=$('#preview-recs'), pp=$('#preview-prep');
+  state.docs[o.id]={sig:contentSig(o), body:p?p.innerHTML:'', recs:r?r.innerHTML:null, prep:pp?pp.innerHTML:null, mat:$('#matList')?readMat():null};
   refreshDoc(true);
 }
 function setMarkValue(mk, v){
@@ -1162,10 +1174,10 @@ function finishMulti(){
 async function copyPart(part){
   const o=state.items.get(state.currentId); if(!o) return;
   if(part==='recs' && !(o.recs&&o.recs.trim())) return;
-  const el = part==='recs' ? $('#preview-recs') : $('#preview');
+  const el = part==='recs' ? $('#preview-recs') : part==='prep' ? $('#preview-prep') : $('#preview');
   const txt = part==='mat' ? matText() : serializeDoc(el);
   if(part==='mat' && !txt.trim()){ toast(state.canWrite?'Pon la cantidad en algún material':'Ningún material tiene cantidad'); const q=document.querySelector('.mat-q input'); if(q) q.focus(); return; }
-  const ok=await copyText(txt, part==='recs'?'Recomendaciones copiadas':part==='mat'?'Material copiado':(o.type==='quirurgica'?'Protocolo copiado':o.recs?'Informe copiado':'Texto copiado'));
+  const ok=await copyText(txt, part==='recs'?'Recomendaciones copiadas':part==='mat'?'Material copiado':part==='prep'?'Preparación copiada':(o.type==='quirurgica'?'Protocolo copiado':o.recs?'Informe copiado':'Texto copiado'));
   if(ok && state.canWrite){ patchItem(o.id,{uses:(o.uses||0)+1,lastUsed:nowISO()}).then(()=>renderList()).catch(()=>{}); }
 }
 function serializeDoc(el){
@@ -1260,12 +1272,12 @@ function edBlock(part, title, src, hint){
       <button type="button" class="tool" data-tool="date" data-part="${part}" title="Una fecha"><span class="sw k-date"></span>Fecha</button>
       <button type="button" class="tool" data-tool="opt" data-part="${part}" title="Un paso que solo se copia si lo incluyes"><span class="sw k-opt"></span><span class="lbl-opt">Paso opcional</span></button>
     </div>
-    <div class="ed-text" id="ed-${part}" data-part="${part}" spellcheck="true" role="textbox" aria-multiline="true" aria-label="${title}" data-ph="${part==='body'?'Escribe o pega aquí el texto de la plantilla, tal como quieres que se copie.':part==='mat'?'Un material por línea. Los títulos en mayúsculas con dos puntos («SUTURAS:») crean apartados; si no pones ninguno, se reparten solos según el abordaje. Por ejemplo:\nTrócar de 5 mm x2\nEndobolsa x1\nPenrose\n(«x2» al final = cantidad ya puesta; sin número, se rellena en cada paciente; «?» al final = dudoso, abrir solo si hace falta)':'Opcional. Escribe o pega las recomendaciones para el paciente.'}">${edHTML(src)}</div>
+    <div class="ed-text" id="ed-${part}" data-part="${part}" spellcheck="true" role="textbox" aria-multiline="true" aria-label="${title}" data-ph="${part==='body'?'Escribe o pega aquí el texto de la plantilla, tal como quieres que se copie.':part==='mat'?'Un material por línea. Los títulos en mayúsculas con dos puntos («SUTURAS:») crean apartados; si no pones ninguno, se reparten solos según el abordaje. Por ejemplo:\nTrócar de 5 mm x2\nEndobolsa x1\nPenrose\n(«x2» al final = cantidad ya puesta; sin número, se rellena en cada paciente; «?» al final = dudoso, abrir solo si hace falta)':part==='prep'?'ANESTESIA: …\nPROFILAXIS ANTIBIÓTICA: …\nPOSICIÓN: …':'Opcional. Escribe o pega las recomendaciones para el paciente.'}">${edHTML(src)}</div>
     <textarea class="inp body code" id="ed-${part}-code" spellcheck="false" hidden></textarea>
   </section>`;
 }
 function renderEditor(o){
-  const isNew=!o; const d=o||{title:'',type:state.type in TYPES?state.type:'quirurgica',section:state.section!=='all'?state.section:'CCP',tags:[],body:'',mat:'',recs:''};
+  const isNew=!o; const d=o||{title:'',type:state.type in TYPES?state.type:'quirurgica',section:state.section!=='all'?state.section:'CCP',tags:[],body:'',mat:'',prep:'',recs:''};
   ED.range=null; ED.host=null; ED.adv=false;
   setMain(`
     <button class="back" data-action="${isNew?'home':'open-current'}">${ico('back')}${isNew?'Plantillas':'Volver a la plantilla'}</button>
@@ -1289,8 +1301,9 @@ function renderEditor(o){
         <li><b>Selecciona un paso</b> que no siempre haces (o pon el cursor en su línea) y pulsa <span class="mini k-opt">Paso opcional</span>.</li>
         <li>Pulsa cualquier campo rosa para cambiarlo o quitarlo. Los títulos en mayúsculas («TÉCNICA:») se verán en negrita.</li>
       </ol>
-      ${edBlock('body', 'Texto del informe', d.body)}
       ${edBlock('mat', 'Material quirúrgico', d.mat||'', 'Opcional · un material por línea; «x2» pone la cantidad y «?» lo marca como dudoso')}
+      ${edBlock('prep', 'Preparación del paciente', d.prep||'', 'Opcional · anestesia, profilaxis antibiótica, posición y otros; cuadro aparte en las hojas quirúrgicas')}
+      ${edBlock('body', 'Texto del informe', d.body)}
       ${edBlock('recs', 'Recomendaciones al alta', d.recs, 'Opcional · se muestran y copian en un cuadro aparte')}
       <div id="edSyntax" hidden>${syntaxHelp()}</div>
       <div class="detected" id="detected"></div>
@@ -1306,7 +1319,7 @@ function renderEditor(o){
   if(isNew) $('#ed-title').focus();
 }
 function toggleAdv(on){
-  ['body','mat','recs'].forEach(part=>{
+  ['body','mat','prep','recs'].forEach(part=>{
     const div=$('#ed-'+part), ta=$('#ed-'+part+'-code'); if(!div||!ta) return;
     if(on){ ta.value=serializeEd(div); }
     else { div.innerHTML=edHTML(ta.value); ensureCaretSlots(div); }
@@ -1318,8 +1331,8 @@ function toggleAdv(on){
 }
 function updateDetected(){
   const box=$('#detected'); if(!box) return;
-  const body=edSource('body'), recs=edSource('recs'), mat=edSource('mat'), src=body+'\n'+mat+'\n'+recs;
-  const f=parseFields(src), op=[...parseOptionals(body),...parseOptionals(mat),...parseOptionals(recs)];
+  const body=edSource('body'), recs=edSource('recs'), mat=edSource('mat'), prep=edSource('prep'), src=prep+'\n'+body+'\n'+mat+'\n'+recs;
+  const f=parseFields(src), op=[...parseOptionals(prep),...parseOptionals(body),...parseOptionals(mat),...parseOptionals(recs)];
   const nt=f.filter(x=>!x.options&&!x.isDate).length, nc=f.filter(x=>x.options).length, nd=f.filter(x=>x.isDate).length;
   const parts=[];
   if(nt) parts.push(`<span class="tag">${nt} hueco${nt===1?'':'s'} para escribir</span>`);
@@ -1538,7 +1551,7 @@ document.addEventListener('paste', ev=>{
 async function submitEditor(e){
   e.preventDefault();
   const title=$('#ed-title').value.trim();
-  let body=edSource('body'), recs=edSource('recs'); const mat=edSource('mat');
+  let body=edSource('body'), recs=edSource('recs'); const mat=edSource('mat'), prep=edSource('prep');
   const sp=splitRecs(body); if(sp.recs){ body=sp.body; recs=recs?sp.recs+'\n\n'+recs:sp.recs; }
   const err=$('#edErr');
   if(!title){ err.textContent='Falta el nombre de la plantilla.'; $('#ed-title').focus(); return; }
@@ -1548,7 +1561,7 @@ async function submitEditor(e){
   const section=$('#ed-section').value;
   const tags=$('#ed-tags').value.split(',').map(s=>s.trim()).filter(Boolean);
   const prev=state.currentId?state.items.get(state.currentId):null;
-  const o={ id:prev?prev.id:newId(), title, type, approach, section, tags, body, mat, recs, fav:prev?!!prev.fav:false, uses:prev?prev.uses||0:0, createdAt:prev?prev.createdAt||nowISO():nowISO(), updatedAt:nowISO() };
+  const o={ id:prev?prev.id:newId(), title, type, approach, section, tags, prep, body, mat, recs, fav:prev?!!prev.fav:false, uses:prev?prev.uses||0:0, createdAt:prev?prev.createdAt||nowISO():nowISO(), updatedAt:nowISO() };
   const btn=e.submitter; if(btn) btn.disabled=true;
   try{ await saveItem(o); delete state.docs[o.id]; toast(prev?'Cambios guardados':'Plantilla creada'); go('detail',o.id); }
   catch(x){ err.textContent=dbErr(x); if(btn) btn.disabled=false; }
@@ -1560,7 +1573,7 @@ function parseImport(text, defType, defSec){
   if(/^[\[{]/.test(text)){
     try{
       let data=JSON.parse(text); if(!Array.isArray(data)) data=data.plantillas||data.templates||[data];
-      return data.map(x=>({title:String(x.title||x.titulo||x.nombre||'').trim(), body:String(x.body||x.texto||x.contenido||''), recs:String(x.recs||x.recomendaciones||''), mat:String(x.mat||x.material||''), type:mapType(x.type||x.tipo)||defType, section:mapSection(x.section||x.seccion||x['sección'])||defSec, tags:Array.isArray(x.tags||x.etiquetas)?(x.tags||x.etiquetas).map(String):String(x.tags||x.etiquetas||'').split(',').map(s=>s.trim()).filter(Boolean), fav:!!x.fav})).filter(x=>x.title&&x.body.trim());
+      return data.map(x=>({title:String(x.title||x.titulo||x.nombre||'').trim(), body:String(x.body||x.texto||x.contenido||''), recs:String(x.recs||x.recomendaciones||''), mat:String(x.mat||x.material||''), prep:String(x.prep||x.preparacion||''), type:mapType(x.type||x.tipo)||defType, section:mapSection(x.section||x.seccion||x['sección'])||defSec, tags:Array.isArray(x.tags||x.etiquetas)?(x.tags||x.etiquetas).map(String):String(x.tags||x.etiquetas||'').split(',').map(s=>s.trim()).filter(Boolean), fav:!!x.fav})).filter(x=>x.title&&x.body.trim());
     }catch{ /* fall through to text */ }
   }
   const lines=text.replace(/\r/g,'').split('\n');
@@ -1629,7 +1642,7 @@ async function doImport(){
   let ok=0;
   for(const x of list){
     const sp=x.recs?{body:x.body,recs:x.recs}:splitRecs(x.body);
-    const o={id:newId(),title:x.title,type:x.type,section:x.section,tags:x.tags,body:sp.body,recs:sp.recs,mat:x.mat||'',fav:!!x.fav,uses:0,createdAt:nowISO(),updatedAt:nowISO()};
+    const o={id:newId(),title:x.title,type:x.type,section:x.section,tags:x.tags,body:sp.body,recs:sp.recs,mat:x.mat||'',prep:x.prep||'',fav:!!x.fav,uses:0,createdAt:nowISO(),updatedAt:nowISO()};
     try{ await saveItem(o); ok++; btn.textContent=`Importando ${ok}/${list.length}…`; }
     catch(e){ toast(dbErr(e)); break; }
   }
@@ -1791,7 +1804,7 @@ document.addEventListener('input', ev=>{
   if(t.id==='hmQ'){ homeQ=t.value; homeSel=0; updateHomeResults(); return; }
   if(t.id==='q'){ state.q=t.value; renderList(); return; }
   if(t.classList && t.classList.contains('ed-text')) ensureCaretSlots(t);
-  if(t.id==='ed-body'||t.id==='ed-recs'||t.id==='ed-mat'||(t.classList&&t.classList.contains('code'))){ updateDetected(); $('#edErr').textContent=''; return; }
+  if(t.id==='ed-body'||t.id==='ed-recs'||t.id==='ed-mat'||t.id==='ed-prep'||(t.classList&&t.classList.contains('code'))){ updateDetected(); $('#edErr').textContent=''; return; }
   if(t.id==='ed-title'){ $('#edErr').textContent=''; return; }
   if(t.id==='imp-text') updateImportPreview();
 });

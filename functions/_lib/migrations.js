@@ -25,6 +25,36 @@ export function desdeIntervencion(txt) {
   return txt.replace(/(Solicite cita con enfermería (?:de|en) su Centro de Salud en \d+ (?:días|semanas?))(?! \(desde la intervención\))( para valorar la retirada)/g, '$1 (desde la intervención)$2');
 }
 
+/* 2026-10-22 · Hojas quirúrgicas: nuevo apartado «Preparación del paciente» (anestesia, profilaxis, posición, otros) */
+const PREP_KEYS = ['ANESTESIA', 'PROFILAXIS ANTIBIÓTICA', 'POSICIÓN'];
+const PREP_DEFAULT = {
+  'ANESTESIA': '{{Anestesia: General | Raquídea | Local | Local con sedación}}',
+  'PROFILAXIS ANTIBIÓTICA': '{{Profilaxis antibiótica}}',
+  'POSICIÓN': '{{Posición}}'
+};
+export function separarPreparacion(o) {
+  if (!o || o.type !== 'quirurgica' || (o.prep && o.prep.trim())) return false;
+  let body = String(o.body || '');
+  const got = {};
+  for (const k of PREP_KEYS) {
+    const re = new RegExp('(^|\\n)(' + k + ':[^\\n]*(?:\\n(?!\\n)[^\\n]*)*)');
+    const m = body.match(re);
+    if (m) { got[k] = m[2].slice(k.length + 1).trim(); body = body.replace(m[2], ''); }
+  }
+  if (!got['POSICIÓN']) {           // plantillas sin títulos: «- Posición en decúbito supino.» en las primeras líneas
+    const lines = body.split('\n');
+    for (let i = 0; i < Math.min(lines.length, 3); i++) {
+      const m = lines[i].match(/^\s*-\s*Posición\s+(?:en\s+|de\s+)?(.+?)\s*$/i);
+      if (m) { let t = m[1].replace(/\.$/, ''); got['POSICIÓN'] = t.charAt(0).toUpperCase() + t.slice(1) + '.'; lines.splice(i, 1); body = lines.join('\n'); break; }
+    }
+  }
+  const prep = PREP_KEYS.map(k => `${k}: ${got[k] || PREP_DEFAULT[k]}`);
+  prep.push('[[OTROS: {{Otros}}]]');
+  o.prep = prep.join('\n\n');
+  o.body = body.replace(/\n{3,}/g, '\n\n').replace(/^\s*\n+/, '').replace(/\s+$/, '');
+  return true;
+}
+
 export function inferirAbordaje(o) {
   if (!o || o.type !== 'quirurgica') return '';
   const t = String(o.title || '').toLowerCase();
@@ -38,5 +68,6 @@ export const MIGRATIONS = [
   { id: '2026-10-20-material-apendicectomia', run: items => { const o = items['sd-apendicectomia-laparoscopica']; if (o && !(o.mat && o.mat.trim())) o.mat = MAT_APENDICECTOMIA; } },
   { id: '2026-10-20-material-dudoso', run: items => { const o = items['sd-apendicectomia-laparoscopica']; if (o && o.mat === MAT_APENDICECTOMIA) o.mat = MAT_APENDICECTOMIA_2; } },
   { id: '2026-10-20-abordaje', run: items => { for (const o of Object.values(items)) { if (o && !o.approach) { const a = inferirAbordaje(o); if (a) o.approach = a; } } } },
-  { id: '2026-10-21-desde-intervencion', run: items => { for (const o of Object.values(items)) { if (o && o.recs) o.recs = desdeIntervencion(o.recs); } } }
+  { id: '2026-10-21-desde-intervencion', run: items => { for (const o of Object.values(items)) { if (o && o.recs) o.recs = desdeIntervencion(o.recs); } } },
+  { id: '2026-10-22-preparacion-paciente', run: items => { for (const o of Object.values(items)) separarPreparacion(o); } }
 ];

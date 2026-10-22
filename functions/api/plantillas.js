@@ -67,6 +67,7 @@ function cleanItem(o) {
     body: str(o.body, 200000),
     recs: str(o.recs, 200000),
     mat: str(o.mat, 100000),
+    prep: str(o.prep, 100000),
     approach: ['abierta', 'laparoscopica', 'robotica'].includes(o.approach) ? o.approach : '',
     fav: !!o.fav,
     uses: Math.max(0, Math.min(1e7, Number(o.uses) || 0)),
