@@ -1105,14 +1105,14 @@ function renderDetail(o){
       <span class="pending" id="pending"></span>
     </div>
     ${hasMat?`<article class="doc mat${state.matOpen?' open':''}">
-      <div class="doc-head mat-head"><button type="button" class="mat-toggle" data-action="mat-toggle" aria-expanded="${!!state.matOpen}" aria-controls="matBody"><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg><span class="dot"></span><b>Material quirúrgico</b><span class="mat-sum" id="matSum"></span></button>${copyMat}</div>
+      <div class="doc-head mat-head"><button type="button" class="mat-toggle" data-action="mat-toggle" aria-expanded="${!!state.matOpen}" aria-controls="matBody"><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg><span class="dot"></span><b>Material quirúrgico</b></button>${copyMat}</div>
       <div class="mat-body" id="matBody" ${state.matOpen?'':'hidden'}>
         <div class="mat-list" id="matList" aria-label="Material quirúrgico"></div>
         <p class="mat-hint" id="matHint"></p>
       </div>
     </article>`:''}
     ${hasPrep?`<article class="doc prep${state.prepOpen?' open':''}">
-      <div class="doc-head mat-head"><button type="button" class="mat-toggle" data-action="prep-toggle" aria-expanded="${!!state.prepOpen}" aria-controls="prepBody"><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg><span class="dot"></span><b>Preparación del paciente</b><span class="mat-sum" id="prepSum"></span></button>${copyPrep}</div>
+      <div class="doc-head mat-head"><button type="button" class="mat-toggle" data-action="prep-toggle" aria-expanded="${!!state.prepOpen}" aria-controls="prepBody"><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg><span class="dot"></span><b>Preparación del paciente</b></button>${copyPrep}</div>
       <div id="prepBody" ${state.prepOpen?'':'hidden'}><div class="mat-list prep-list" id="prepList" aria-label="Preparación del paciente"></div></div>
     </article>`:''}
     <article class="doc t-${esc(o.type)}">
