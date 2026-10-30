@@ -81,6 +81,41 @@ export function normalizarPreparacion(o) {
   o.prep = out; return true;
 }
 
+/* 2026-10-30 · Apendicectomía laparoscópica: mejoras de documentación (hallazgos, AP, cultivo, aspirado, conversión,
+ * pérdida hemática, neumoperitoneo, vaciamiento vesical, antibiótico y signos de alarma al alta). Solo si aún no se aplicaron. */
+function rep(txt, a, b) { return txt.includes(a) ? txt.replace(a, b) : txt; }
+export function mejorarApendicectomia(o) {
+  if (!o || o.id !== 'sd-apendicectomia-laparoscopica') return false;
+  if (/Anatomía Patológica/.test(o.body || '')) return false;
+  let b = String(o.body || '');
+  b = rep(b, 'ACCESO: Hasson supraumbilical. Trócares',
+    'ACCESO: Hasson supraumbilical. Neumoperitoneo a {{Presión del neumoperitoneo: 12 | 14 | 15}} mmHg. Trócares');
+  b = b.replace(/HALLAZGOS:\s*(\{\{Clasificación intraoperatoria AAST:[^}]*\}\})/,
+    'HALLAZGOS: Apéndice {{Posición del apéndice: ilíaco | pélvico | retrocecal | subhepático | paracecal}}. $1. Base apendicular {{Base apendicular: sana | inflamada | necrótica o perforada}}.\n' +
+    '[[Líquido {{Líquido peritoneal: seroso | turbio | purulento | hemático}} en {{Localización del líquido: fosa ilíaca derecha | pelvis | fosa ilíaca derecha y pelvis | cuatro cuadrantes}}.]]\n' +
+    '[[Revisión de íleon terminal (sin divertículo de Meckel), anejos y sigma, sin otros hallazgos.]]');
+  b = b.replace('. | Grado V:', ' | Grado V:').replace('peritonitis generalizada.}}', 'peritonitis generalizada}}');
+  b = rep(b, 'TÉCNICA:\n- Disección', 'TÉCNICA:\n[[- Toma de muestra de líquido peritoneal para cultivo.]]\n- Disección');
+  b = rep(b, '- Extracción de la pieza mediante endobolsa.',
+    '- Extracción de la pieza mediante endobolsa y envío a Anatomía Patológica.\n[[- Aspirado de fosa ilíaca derecha y pelvis.]]\n[[- Conversión a laparotomía por {{Motivo de la conversión}}.]]');
+  b = rep(b, '\n\nDRENAJES:', '\n\nPÉRDIDA HEMÁTICA ESTIMADA: {{Pérdida hemática (cc)}} cc.\n\nDRENAJES:');
+  o.body = b;
+  let r = String(o.recs || '');
+  r = rep(r, '\n\nCUIDADOS PERSONALES:',
+    '\n\n[[TRATAMIENTO ANTIBIÓTICO:\n- {{Antibiótico oral}} durante {{Días de antibiótico}} días.\n\n]]CUIDADOS PERSONALES:');
+  r = rep(r, '\n\nSI APARECEN COMPLICACIONES, ACUDA A URGENCIAS.',
+    '\n\nACUDA A URGENCIAS SI PRESENTA:\n- Fiebre superior a 38 ºC.\n- Dolor abdominal que aumenta o no cede con la analgesia.\n- Vómitos persistentes o imposibilidad para comer.\n- Enrojecimiento, calor o supuración de las heridas.');
+  o.recs = r;
+  let m = String(o.mat || '');
+  m = m.replace(/\n?Anestésico local \([^\n]*\)[^\n]*/, '');
+  if (!/Hem-o-lok/i.test(m)) m = rep(m, 'Endo GIA Ultra 45 mm (carga morada) x1 ?', 'Endo GIA Ultra 45 mm (carga morada) x1 ?\nClips Hem-o-lok ?');
+  o.mat = m;
+  let pr = String(o.prep || '');
+  if (!/Vaciamiento vesical/i.test(pr)) pr = /OTROS:\s*$/.test(pr) ? pr.replace(/OTROS:\s*$/, 'OTROS:\nVaciamiento vesical') : pr + (pr ? '\n\n' : '') + 'OTROS:\nVaciamiento vesical';
+  o.prep = pr;
+  return true;
+}
+
 export function inferirAbordaje(o) {
   if (!o || o.type !== 'quirurgica') return '';
   const t = String(o.title || '').toLowerCase();
@@ -96,5 +131,6 @@ export const MIGRATIONS = [
   { id: '2026-10-20-abordaje', run: items => { for (const o of Object.values(items)) { if (o && !o.approach) { const a = inferirAbordaje(o); if (a) o.approach = a; } } } },
   { id: '2026-10-21-desde-intervencion', run: items => { for (const o of Object.values(items)) { if (o && o.recs) o.recs = desdeIntervencion(o.recs); } } },
   { id: '2026-10-22-preparacion-paciente', run: items => { for (const o of Object.values(items)) separarPreparacion(o); } },
-  { id: '2026-10-22-preparacion-informativa', run: items => { for (const o of Object.values(items)) normalizarPreparacion(o); } }
+  { id: '2026-10-22-preparacion-informativa', run: items => { for (const o of Object.values(items)) normalizarPreparacion(o); } },
+  { id: '2026-10-30-apendicectomia-mejoras', run: items => { mejorarApendicectomia(items['sd-apendicectomia-laparoscopica']); } }
 ];
