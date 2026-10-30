@@ -1,3 +1,6 @@
+import { aplicarRevision } from './revision-2026-10-30.js';
+import { BASE_FP } from './revision-2026-10-30-base.js';
+
 /* Migraciones de contenido que se aplican una sola vez a las plantillas guardadas en la nube. */
 
 /* 2026-10-20 · Quitar de las recomendaciones al alta las citas de seguimiento con especialistas.
@@ -132,5 +135,6 @@ export const MIGRATIONS = [
   { id: '2026-10-21-desde-intervencion', run: items => { for (const o of Object.values(items)) { if (o && o.recs) o.recs = desdeIntervencion(o.recs); } } },
   { id: '2026-10-22-preparacion-paciente', run: items => { for (const o of Object.values(items)) separarPreparacion(o); } },
   { id: '2026-10-22-preparacion-informativa', run: items => { for (const o of Object.values(items)) normalizarPreparacion(o); } },
-  { id: '2026-10-30-apendicectomia-mejoras', run: items => { mejorarApendicectomia(items['sd-apendicectomia-laparoscopica']); } }
+  { id: '2026-10-30-apendicectomia-mejoras', run: items => { mejorarApendicectomia(items['sd-apendicectomia-laparoscopica']); } },
+  { id: '2026-10-30-revision-quirurgicas', run: items => { aplicarRevision(items, BASE_FP); } }
 ];
