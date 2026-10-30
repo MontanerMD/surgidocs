@@ -4,14 +4,14 @@
  * para no pisar cambios hechos después desde la app. */
 
 /* ---------- bloques comunes ---------- */
-const PROF_LIMPIA = 'Cefazolina 2 g iv (3 g si peso > 120 kg) 30-60 min antes de la incisión. Alergia a betalactámicos: Clindamicina 900 mg iv';
-const PROF_COLON = 'Cefuroxima 1,5 g + Metronidazol 15 mg/kg\nCefuroxima 1,5 g + Metronidazol 15 mg/kg + Gentamicina 5 mg/kg\nCefuroxima 1,5 g + Gentamicina 5 mg/kg';
-const PROF_NO = 'No indicada de rutina';
+export const PROF_LIMPIA = 'Cefazolina 2 g iv (3 g si peso > 120 kg) 30-60 min antes de la incisión. Alergia a betalactámicos: Clindamicina 900 mg iv';
+export const PROF_COLON = 'Cefuroxima 1,5 g + Metronidazol 15 mg/kg\nCefuroxima 1,5 g + Metronidazol 15 mg/kg + Gentamicina 5 mg/kg\nCefuroxima 1,5 g + Gentamicina 5 mg/kg';
+export const PROF_NO = 'No indicada de rutina';
 
-const ANALG = '- Si tiene dolor, tome paracetamol 650mg 1 comprimido cada 8h (desayuno, comida y cena). Si es insuficiente, altérnelo con metamizol 575mg (Nolotil) 1 comprimido cada 8h (almuerzo y merienda).';
-const MED = 'MEDICACIÓN:\n- Puede continuar con su medicación domiciliaria habitual.\n' + ANALG;
+export const ANALG = '- Si tiene dolor, tome paracetamol 650mg 1 comprimido cada 8h (desayuno, comida y cena). Si es insuficiente, altérnelo con metamizol 575mg (Nolotil) 1 comprimido cada 8h (almuerzo y merienda).';
+export const MED = 'MEDICACIÓN:\n- Puede continuar con su medicación domiciliaria habitual.\n' + ANALG;
 
-const HERIDAS = (n, plazo, que) => n === 1
+export const HERIDAS = (n, plazo, que) => n === 1
   ? `CUIDADOS DE LA HERIDA:
 - Mantenga la herida limpia y seca. Puede ducharse diariamente y lavarla con agua y jabón (sin frotar), pero evite bañarse hasta su cicatrización completa.
 - Aplique clorhexidina (Cristalmina) diariamente sobre la misma. Puede dejarla descubierta o taparla con un apósito si mancha la ropa o molesta al roce.` + (plazo ? `\n- Solicite cita con enfermería de su Centro de Salud en ${plazo} (desde la intervención) para valorar la retirada de ${que}.` : '')
@@ -19,33 +19,33 @@ const HERIDAS = (n, plazo, que) => n === 1
 - Mantenga las heridas limpias y secas. Puede ducharse diariamente y lavarlas con agua y jabón (sin frotar), pero evite bañarse hasta su cicatrización completa.
 - Aplique clorhexidina (Cristalmina) diariamente sobre las mismas. Puede dejarlas descubiertas o taparlas con apósitos si manchan la ropa o molestan al roce.` + (plazo ? `\n- Solicite cita con enfermería de su Centro de Salud en ${plazo} (desde la intervención) para valorar la retirada de ${que}.` : '');
 
-const DRENAJES_CUIDADOS = `CUIDADOS DE LOS DRENAJES:
+export const DRENAJES_CUIDADOS = `CUIDADOS DE LOS DRENAJES:
 - Anote o marque diariamente el nivel de los drenajes.
 - En caso de pérdida del vacío, llenado, fuga o caída de los drenajes, acuda a Urgencias.
 - Con enfermería en menos de 1 semana para valorar la retirada de los drenajes.`;
 
-const ESFUERZO_ABD = '- Evite esfuerzos físicos intensos que comprometan la región abdominal (coger peso o subir escaleras, por ejemplo) durante el 1º mes postoperatorio.';
-const ESTRENIMIENTO = `EVITE EL ESTREÑIMIENTO:
+export const ESFUERZO_ABD = '- Evite esfuerzos físicos intensos que comprometan la región abdominal (coger peso o subir escaleras, por ejemplo) durante el 1º mes postoperatorio.';
+export const ESTRENIMIENTO = `EVITE EL ESTREÑIMIENTO:
 - Dieta rica en fibra e hidratación abundante (>2 litros/día).
 - Plantago ovata (Plantaben): 1 sobre con 2 vasos de agua diariamente.
 - Macrogol (Movicol): 1 sobre cada 12h o 24h durante los primeros días.`;
-const HIGIENE_ANAL = `MEDIDAS HIGIÉNICAS:
+export const HIGIENE_ANAL = `MEDIDAS HIGIÉNICAS:
 - Mantenga una buena higiene íntima. Tras cada deposición lávese con agua y jabón y seque la zona suavemente sin arrastrar.
 - Evite el papel higiénico y las toallitas húmedas.
 - Realice baños de asiento con agua tibia durante 5-10 minutos, sin añadir ninguna sustancia, hasta 2 veces al día y tras cada deposición.`;
 
-const ALARMA = (items) => 'ACUDA A URGENCIAS SI PRESENTA:\n' + items.map(x => '- ' + x).join('\n');
-const A_FIEBRE = 'Fiebre superior a 38 ºC.';
-const A_HERIDA = 'Enrojecimiento, calor, supuración o sangrado de las heridas.';
-const A_HERIDA1 = 'Enrojecimiento, calor, supuración o sangrado de la herida.';
-const A_ABD = ['Fiebre superior a 38 ºC.', 'Dolor abdominal que aumenta o no cede con la analgesia.', 'Vómitos persistentes o imposibilidad para comer.', A_HERIDA];
-const A_ANAL = [A_FIEBRE, 'Sangrado abundante o con coágulos.', 'Dolor intenso que no cede con la analgesia.', 'Imposibilidad para orinar.'];
+export const ALARMA = (items) => 'ACUDA A URGENCIAS SI PRESENTA:\n' + items.map(x => '- ' + x).join('\n');
+export const A_FIEBRE = 'Fiebre superior a 38 ºC.';
+export const A_HERIDA = 'Enrojecimiento, calor, supuración o sangrado de las heridas.';
+export const A_HERIDA1 = 'Enrojecimiento, calor, supuración o sangrado de la herida.';
+export const A_ABD = ['Fiebre superior a 38 ºC.', 'Dolor abdominal que aumenta o no cede con la analgesia.', 'Vómitos persistentes o imposibilidad para comer.', A_HERIDA];
+export const A_ANAL = [A_FIEBRE, 'Sangrado abundante o con coágulos.', 'Dolor intenso que no cede con la analgesia.', 'Imposibilidad para orinar.'];
 
-const LAP_ACCESO_NEUMO = 'Neumoperitoneo a {{Presión del neumoperitoneo: 12 | 14 | 15}} mmHg.';
-const REV_LAP = 'REVISIÓN: Hemostasia satisfactoria. Retirada de trócares bajo visión directa, sin sangrado en los orificios. Recuento correcto de material quirúrgico, confirmado por enfermería.';
-const REV_ABIERTA = 'REVISIÓN: Hemostasia satisfactoria. Recuento correcto de material quirúrgico, confirmado por enfermería.';
-const PERDIDA = 'PÉRDIDA HEMÁTICA ESTIMADA: {{Pérdida hemática (cc)}} cc.';
-const CONVERSION = '[[- Conversión a laparotomía por {{Motivo de la conversión}}.]]';
+export const LAP_ACCESO_NEUMO = 'Neumoperitoneo a {{Presión del neumoperitoneo: 12 | 14 | 15}} mmHg.';
+export const REV_LAP = 'REVISIÓN: Hemostasia satisfactoria. Retirada de trócares bajo visión directa, sin sangrado en los orificios. Recuento correcto de material quirúrgico, confirmado por enfermería.';
+export const REV_ABIERTA = 'REVISIÓN: Hemostasia satisfactoria. Recuento correcto de material quirúrgico, confirmado por enfermería.';
+export const PERDIDA = 'PÉRDIDA HEMÁTICA ESTIMADA: {{Pérdida hemática (cc)}} cc.';
+export const CONVERSION = '[[- Conversión a laparotomía por {{Motivo de la conversión}}.]]';
 
 /* ---------- plantillas ---------- */
 export const REVISION = {

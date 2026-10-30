@@ -1,5 +1,6 @@
 import { aplicarRevision } from './revision-2026-10-30.js';
 import { BASE_FP } from './revision-2026-10-30-base.js';
+import { anadirNuevasCCP } from './nuevas-ccp-2026-10-30.js';
 
 /* Migraciones de contenido que se aplican una sola vez a las plantillas guardadas en la nube. */
 
@@ -136,5 +137,6 @@ export const MIGRATIONS = [
   { id: '2026-10-22-preparacion-paciente', run: items => { for (const o of Object.values(items)) separarPreparacion(o); } },
   { id: '2026-10-22-preparacion-informativa', run: items => { for (const o of Object.values(items)) normalizarPreparacion(o); } },
   { id: '2026-10-30-apendicectomia-mejoras', run: items => { mejorarApendicectomia(items['sd-apendicectomia-laparoscopica']); } },
-  { id: '2026-10-30-revision-quirurgicas', run: items => { aplicarRevision(items, BASE_FP); } }
+  { id: '2026-10-30-revision-quirurgicas', run: items => { aplicarRevision(items, BASE_FP); } },
+  { id: '2026-10-30-nuevas-ccp', run: items => { anadirNuevasCCP(items); } }
 ];
