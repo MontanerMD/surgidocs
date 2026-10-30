@@ -96,6 +96,8 @@ kbd{font-family:var(--f-mono);font-size:10.5px;line-height:1;padding:3px 5px;bor
 .navrow{display:flex;align-items:center;gap:10px;width:100%;height:36px;padding:0 10px;border-radius:10px;border:0;background:none;color:var(--ink2);font-weight:500;font-size:13.5px;text-align:left}
 .navrow:hover{background:var(--hover)}
 .navrow[aria-current="true"]{background:var(--accent-soft);color:var(--accent-text);font-weight:700}
+body.searching .navrow[aria-current="true"],body.searching .pill[aria-pressed="true"]{background:none;color:var(--ink2);font-weight:500;box-shadow:none;border-color:var(--line)}
+body.searching .navrow[aria-current="true"] .n,body.searching .navrow[aria-current="true"] .ico{color:var(--faint)}
 .navrow .ico{width:16px;height:16px;color:var(--faint)}
 .navrow[aria-current="true"] .ico{color:var(--accent-text)}
 .navrow .n{margin-left:auto;font-size:12px;color:var(--faint);font-variant-numeric:tabular-nums;font-weight:500}
@@ -904,9 +906,12 @@ const isDesktop = () => matchMedia('(min-width: 900px)').matches;
 function filtered(){
   const q=norm(state.q);
   let arr=[...state.items.values()];
-  if(state.type==='fav') arr=arr.filter(o=>o.fav);
-  else if(state.type!=='all') arr=arr.filter(o=>o.type===state.type);
-  if(state.section!=='all') arr=arr.filter(o=>o.section===state.section);
+  /* a search always looks in every template, whatever type or section is selected */
+  if(!q){
+    if(state.type==='fav') arr=arr.filter(o=>o.fav);
+    else if(state.type!=='all') arr=arr.filter(o=>o.type===state.type);
+    if(state.section!=='all') arr=arr.filter(o=>o.section===state.section);
+  }
   if(q){ const words=q.split(/\s+/); arr=arr.filter(o=>{ const hay=norm([o.title,(o.tags||[]).join(' '),o.section,TYPES[o.type]?.label,APPROACHES[o.approach]||'',o.prep,o.body,o.mat,o.recs].join(' ')); return words.every(w=>hay.includes(w)); }); }
   const by={
     recent:(a,b)=>String(b.updatedAt||'').localeCompare(String(a.updatedAt||'')),
@@ -942,8 +947,9 @@ function renderList(){
     return;
   }
   const arr=filtered();
-  if(!arr.length){ box.innerHTML=`<div class="empty"><b>Sin resultados</b><span>Prueba con otra palabra o quita filtros.</span><button class="btn sm" data-action="clear-filters">Quitar filtros</button></div>`; return; }
-  if(state.type==='all' && state.sort!=='used' && !state.q){
+  if(!arr.length){ box.innerHTML=`<div class="empty"><b>Sin resultados</b><span>${norm(state.q)?'Ninguna plantilla contiene esa búsqueda.':'Prueba con otra palabra o quita filtros.'}</span><button class="btn sm" data-action="clear-filters">Quitar filtros</button></div>`; return; }
+  document.body.classList.toggle('searching', !!norm(state.q));
+  if((state.type==='all' || norm(state.q)) && state.sort!=='used'){
     const groups=TYPE_ORDER.map(t=>[t,arr.filter(o=>o.type===t)]).filter(g=>g[1].length);
     box.innerHTML=groups.map(([t,l])=>`<div class="group-label">${TYPES[t].plural}</div>`+l.map(itemHTML).join('')).join('');
   } else box.innerHTML=arr.map(itemHTML).join('');
