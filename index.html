@@ -85,6 +85,13 @@ kbd{font-family:var(--f-mono);font-size:10.5px;line-height:1;padding:3px 5px;bor
 .search input{flex:1;min-width:0;width:0;border:0;background:transparent;outline:none;font-size:14px}
 .search input::placeholder{color:var(--faint)}
 .top-actions{display:flex;gap:8px;flex:none}
+.btn.edit-key{background:var(--surface);border-color:var(--accent);color:var(--accent-text);font-weight:700}
+.btn.edit-key:hover{background:var(--accent-soft)}
+.btn.edit-on{background:#e9f7ef;border-color:#9fd8b6;color:#17663b;font-weight:700}
+.btn.edit-on:hover{background:#dcf2e5}
+.btn.edit-key>span,.btn.edit-on>span{display:inline-flex;align-items:center}
+.btn.edit-key[hidden],.btn.edit-on[hidden]{display:none}
+.top-actions .l-sm{display:none!important}
 
 /* app frame */
 .app{display:grid;grid-template-columns:296px minmax(0,1fr);height:calc(100dvh - var(--top) - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))}
@@ -451,6 +458,7 @@ pre.sample{margin:0;font-family:var(--f-mono);font-size:11.5px;background:var(--
 .bottomnav{display:none}
 .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translate(-50%,16px);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:999px;font-weight:600;font-size:13px;opacity:0;pointer-events:none;transition:.2s;z-index:50;max-width:calc(100% - 32px);text-align:center}
 .toast.on{opacity:1;transform:translate(-50%,0)}
+body[data-view="edit"] .toast{bottom:calc(84px + env(safe-area-inset-bottom,0px))}
 
 @media (max-width:1199px){
   .app{grid-template-columns:256px minmax(0,1fr)}
@@ -463,7 +471,9 @@ pre.sample{margin:0;font-family:var(--f-mono);font-size:11.5px;background:var(--
   .bar{height:auto;flex-wrap:wrap;gap:10px;padding-block:10px}
   .search{order:3;flex-basis:100%;max-width:none}
   body:not([data-view="list"]) .search{display:none}
-  .top-actions{display:none}
+  .top-actions{margin-left:auto}
+  .top-actions [data-action="import"],.top-actions #btnNew{display:none}
+  .top-actions .btn{height:38px;padding-left:12px;padding-right:12px}
   .app{display:block;height:auto}
   .side,.main{overflow:visible;border:0}
   body[data-view="list"] .main{display:none}
@@ -507,6 +517,8 @@ pre.sample{margin:0;font-family:var(--f-mono);font-size:11.5px;background:var(--
 @media (max-width:360px){
   .copybar .btn{font-size:12px!important;padding-left:6px!important;padding-right:6px!important}
   .doc-actions .btn{padding-left:10px;padding-right:10px}
+  .top-actions .btn{font-size:13px;padding-left:10px;padding-right:10px;gap:5px}
+  .top-actions .l-lg{display:none!important}.top-actions .l-sm{display:inline-flex!important}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
@@ -518,7 +530,8 @@ pre.sample{margin:0;font-family:var(--f-mono);font-size:11.5px;background:var(--
     <label class="search"><span id="searchIco"></span><span class="sr">Buscar plantillas</span>
       <input id="q" type="search" placeholder="Buscar plantilla, etiqueta o texto…" autocomplete="off"><kbd>/</kbd></label>
     <div class="top-actions" id="topActions">
-      <button class="btn ghost" id="btnUnlock" data-action="unlock" hidden title="Pide la contraseña de edición">Activar edición</button>
+      <button class="btn edit-key" id="btnUnlock" data-action="unlock" hidden title="Pide la contraseña de edición"><span id="btnUnlockIco"></span><span class="l-lg">Activar edición</span><span class="l-sm">Editar</span></button>
+      <button class="btn edit-on" id="btnLock" data-action="lock-ask" hidden title="La edición está activada en este dispositivo. Pulsa para desactivarla."><span id="btnLockIco"></span><span class="l-lg">Edición activada</span><span class="l-sm">Editando</span></button>
       <button class="btn outline" data-action="import">Importar</button>
       <button class="btn primary" data-action="new" id="btnNew">Nueva plantilla</button>
     </div>
@@ -548,6 +561,7 @@ pre.sample{margin:0;font-family:var(--f-mono);font-size:11.5px;background:var(--
   <div class="in">
     <button data-action="home" aria-current="true" id="navList"><span id="navListIco"></span>Plantillas</button>
     <button data-action="new" id="navNew"><span class="plus" id="navNewIco"></span>Nueva</button>
+    <button data-action="unlock" id="navUnlock" hidden><span class="plus" id="navUnlockIco"></span>Activar edición</button>
     <button data-action="import" id="navImp"><span id="navImpIco"></span>Importar</button>
   </div>
 </nav>
@@ -580,7 +594,9 @@ const I = {
   list:'<path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"/>',
   reset:'<path d="M4 12a8 8 0 1 0 2.3-5.7L4 8.6M4 4v4.6h4.6"/>',
   file:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/>',
-  check:'<path d="m5 12.5 4.5 4.5L19 7.5"/>'
+  check:'<path d="m5 12.5 4.5 4.5L19 7.5"/>',
+  lock:'<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+  unlock:'<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 7.7-1.5"/>'
 };
 const ico = (n, cls='') => `<svg class="ico ${cls}" viewBox="0 0 24 24" aria-hidden="true">${I[n]}</svg>`;
 
@@ -1099,7 +1115,7 @@ function renderDetail(o){
       <div class="doc-actions">
         ${w?`<button class="btn sm fav" data-action="fav" aria-pressed="${!!o.fav}">${ico('star', o.fav?'filled':'')}Favorita</button>
         <button class="btn sm" data-action="edit">${ico('edit')}Editar</button>
-        <button class="btn sm" data-action="dup">${ico('dup')}Duplicar</button>`:''}
+        <button class="btn sm" data-action="dup">${ico('dup')}Duplicar</button>`:(state.mode==='cloud'?`<button class="btn sm edit-key" data-action="edit" title="Pide la contraseña de edición">${ico('lock')}Editar</button>`:'')}
         <button class="btn sm reset" id="btnReset" data-action="reset" title="Deja la plantilla como recién abierta">${ico('reset')}Reiniciar plantilla</button>
       </div>
     </header>
@@ -1689,7 +1705,7 @@ Paciente en {{Posición: Lloyd-Davies | decúbito supino}}...</pre>
         <button class="btn" data-action="export-copy">${ico('copy')}Copiar JSON</button>
       </div>
     </section>
-    ${state.mode==='cloud'?(w?`<section class="card"><h2>Edición en este ordenador</h2><p>La edición está activada en este navegador. Si es un ordenador compartido, desactívala al terminar.</p><div><button class="btn" data-action="lock">Desactivar la edición</button></div></section>`:`<section class="card"><h2>Edición en este ordenador</h2><p>Las plantillas se pueden consultar y copiar sin contraseña. Para crear, editar o borrar, activa la edición con tu contraseña.</p><div><button class="btn primary" data-action="unlock">Activar edición</button></div></section>`):''}
+    ${state.mode==='cloud'?(w?`<section class="card"><h2>Edición en este dispositivo</h2><p>La edición está activada en este navegador. Si es un dispositivo compartido, desactívala al terminar.</p><div><button class="btn" data-action="lock">Desactivar la edición</button></div></section>`:`<section class="card"><h2>Edición en este dispositivo</h2><p>Las plantillas se pueden consultar y copiar sin contraseña. Para crear, editar o borrar, activa la edición con tu contraseña.</p><div><button class="btn primary" data-action="unlock">Activar edición</button></div></section>`):''}
     ${state.mode==='local'&&w?`<section class="card"><h2>Plantillas iniciales</h2><p>Vuelve a añadir las plantillas que trae la app y que hayas borrado. Las que ya tienes no se tocan.</p><div><button class="btn" data-action="restore-seed">${ico('reset')}Restaurar plantillas iniciales</button></div></section>`:''}
     <p class="notice">Las plantillas no deben contener datos de pacientes. Usa campos {{ }} para todo lo que identifique a una persona.</p>`);
 }
@@ -1732,16 +1748,19 @@ function copyText(text, okMsg){
 function applyWriteMode(){
   const show=state.canWrite;
   $('#btnNew').hidden=!show; $('#navNew').hidden=!show;
-  const u=$('#btnUnlock'); if(u) u.hidden = !(state.mode==='cloud' && !state.canWrite);
+  const cloud=state.mode==='cloud';
+  const u=$('#btnUnlock'); if(u) u.hidden = !(cloud && !state.canWrite);
+  const l=$('#btnLock'); if(l) l.hidden = !(cloud && state.canWrite);
+  const nu=$('#navUnlock'); if(nu) nu.hidden = !(cloud && !state.canWrite);
   renderStatus && state.ready && renderStatus();
 }
 function openUnlock(){
   const m=$('#modal');
   m.innerHTML=`<form class="modal-card" id="unlockForm" role="dialog" aria-modal="true" aria-labelledby="ulT" autocomplete="on">
-    <div class="modal-head"><h2 id="ulT">Activar la edición en este ordenador</h2><span class="hint">Las plantillas se pueden consultar sin contraseña. Para crearlas o modificarlas, escribe la contraseña de edición.</span></div>
+    <div class="modal-head"><h2 id="ulT">Activar la edición en este dispositivo</h2><span class="hint">Las plantillas se pueden consultar sin contraseña. Para crearlas o modificarlas, escribe la contraseña de edición.</span></div>
     <input type="text" name="username" value="plantillario" autocomplete="username" hidden>
     <div class="f"><label for="unlock-key">Contraseña de edición</label><input class="inp" type="password" id="unlock-key" autocomplete="current-password" required></div>
-    <p class="hint">Se recordará en este navegador. En un ordenador compartido, desactívala al terminar desde Importar → «Desactivar la edición».</p>
+    <p class="hint">Se recordará en este navegador. En un dispositivo compartido, desactívala al terminar pulsando «Edición activada», arriba.</p>
     <p class="err" id="unlock-err"></p>
     <div class="modal-bar"><span class="sp"></span><button type="button" class="btn ghost" data-dlg="cancel">Cancelar</button><button type="submit" class="btn primary">${ico('check')}Activar edición</button></div>
   </form>`;
@@ -1752,12 +1771,21 @@ async function submitUnlock(ev){
   const k=$('#unlock-key').value; const err=$('#unlock-err'); const btn=ev.submitter; if(btn) btn.disabled=true;
   const res=await cloudCheck(k);
   if(btn) btn.disabled=false;
-  if(res.ok){ setEditKey(k); state.canWrite=true; closeDialog(false); applyWriteMode(); renderList(); renderMain(); toast('Edición activada en este ordenador'); }
+  if(res.ok){ setEditKey(k); state.canWrite=true; closeDialog(false); applyWriteMode(); renderList(); const next=state.afterUnlock; state.afterUnlock=null; if(next) next(); else renderMain(); toast('Edición activada en este dispositivo'); }
   else if(res.offline){ err.textContent='No hay conexión con el servidor.'; }
   else if(res.configured===false){ err.textContent='Aún no se ha definido la contraseña de edición en Cloudflare.'; }
   else { err.textContent='Contraseña incorrecta.'; $('#unlock-key').select(); }
 }
 document.addEventListener('submit', ev=>{ if(ev.target.id==='unlockForm') submitUnlock(ev); });
+function openLockAsk(){
+  const m=$('#modal');
+  const editing=document.body.dataset.view==='edit';
+  m.innerHTML=`<div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="lkT">
+    <div class="modal-head"><h2 id="lkT">¿Desactivar la edición?</h2><span class="hint">Podrás seguir consultando y copiando las plantillas. Para volver a editar tendrás que escribir otra vez la contraseña.${editing?' <b>Los cambios que no hayas guardado se perderán.</b>':''}</span></div>
+    <div class="modal-bar"><span class="sp"></span><button type="button" class="btn ghost" data-dlg="cancel">Seguir editando</button><button type="button" class="btn primary" data-action="lock">${ico('lock')}Desactivar</button></div>
+  </div>`;
+  m.hidden=false; setTimeout(()=>m.querySelector('[data-dlg="cancel"]').focus(),0);
+}
 
 /* ---------- events ---------- */
 document.addEventListener('mousedown', ev=>{
@@ -1791,17 +1819,18 @@ document.addEventListener('click', async ev=>{
   if(a!=='del'){ const armed=document.querySelector('.btn.armed'); if(armed){ armed.classList.remove('armed'); armed.innerHTML=`${ico('trash')}Borrar`; } }
   switch(a){
     case 'home': go('list'); break;
-    case 'new': if(state.canWrite) go('edit',null); break;
+    case 'new': if(state.canWrite) go('edit',null); else if(state.mode==='cloud'){ state.afterUnlock=()=>go('edit',null); openUnlock(); } break;
     case 'import': go('import'); break;
-    case 'unlock': openUnlock(); break;
-    case 'lock': setEditKey(''); state.canWrite=false; applyWriteMode(); renderList(); go('list'); toast('Edición desactivada en este ordenador'); break;
+    case 'unlock': state.afterUnlock=null; openUnlock(); break;
+    case 'lock-ask': openLockAsk(); break;
+    case 'lock': { closeDialog(false); setEditKey(''); state.canWrite=false; applyWriteMode(); renderList(); const v=document.body.dataset.view; if(v==='edit') state.currentId?go('detail',state.currentId):go('list'); else renderMain(); toast('Edición desactivada en este dispositivo'); break; }
     case 'open': closeChoice(); go('detail',b.dataset.id); break;
     case 'open-current': state.currentId?go('detail',state.currentId):go('list'); break;
     case 'type': state.type=b.dataset.v; renderList(); break;
     case 'home-type': state.type=b.dataset.v; state.section='all'; renderList(); { const l=$('.side .list, #list'); if(l) l.scrollTop=0; } if(!isDesktop()) go('list'); break;
     case 'sec': state.section=b.dataset.v; renderList(); break;
     case 'clear-filters': state.type='all'; state.section='all'; state.q=''; $('#q').value=''; renderList(); break;
-    case 'edit': go('edit',state.currentId); break;
+    case 'edit': if(state.canWrite) go('edit',state.currentId); else if(state.mode==='cloud'){ const id=state.currentId; state.afterUnlock=()=>go('edit',id); openUnlock(); } break;
     case 'dup': {
       const o=state.items.get(state.currentId); if(!o) break;
       const c={...o,id:newId(),title:o.title+' (copia)',fav:false,uses:0,createdAt:nowISO(),updatedAt:nowISO()};
@@ -1934,7 +1963,7 @@ document.addEventListener('scroll', ev=>{ if(!(ev.target.closest && ev.target.cl
 /* ---------- boot ---------- */
 function paintIcons(){
   $('#searchIco').innerHTML=ico('search');
-  $('#navListIco').innerHTML=ico('list'); $('#navNewIco').innerHTML=ico('plus'); $('#navImpIco').innerHTML=ico('import');
+  $('#navListIco').innerHTML=ico('list'); $('#navNewIco').innerHTML=ico('plus'); $('#navUnlockIco').innerHTML=ico('lock'); $('#btnUnlockIco').innerHTML=ico('lock'); $('#btnLockIco').innerHTML=ico('unlock'); $('#navImpIco').innerHTML=ico('import');
   $('#btnNew').innerHTML=`${ico('plus')}Nueva plantilla`;
 }
 function onData(){
